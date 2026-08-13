@@ -24,12 +24,12 @@ export default async function ConnexionPage() {
   const hasAccount = await accountExists()
 
   return (
-    <div className="mac-desktop flex flex-1 items-center justify-center p-4">
+    <div className="aqua-desktop flex flex-1 items-center justify-center p-4">
       <MacWindow
         title={hasAccount ? 'Connexion' : 'Bienvenue'}
-        className="w-full max-w-[320px]"
+        className="w-full max-w-[340px]"
       >
-        <p className="mb-4 text-[13px]">
+        <p className="mb-5 text-[12px] text-muted-foreground">
           {hasAccount
             ? 'Accédez à vos favoris.'
             : "Cette instance n'accepte qu'un seul compte. C'est le vôtre."}

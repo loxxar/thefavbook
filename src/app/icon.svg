@@ -1,14 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <title>Dossier de favoris</title>
-  <rect width="32" height="32" fill="#fff"/>
-  <!-- Dossier System 6 : onglet décalé à gauche, corps rectangulaire, tout en
-       traits d'un pixel. Le rabat est une simple ligne, comme sur l'icône
-       d'origine dessinée par Susan Kare. -->
-  <path fill="#000" d="M2 6h11v2H2z"/>
-  <path fill="#000" d="M13 6h1v3h-1z"/>
-  <path fill="#000" d="M2 8h1v19H2z"/>
-  <path fill="#000" d="M29 9h1v18h-1z"/>
-  <path fill="#000" d="M2 26h28v2H2z"/>
-  <path fill="#000" d="M13 9h17v1H13z"/>
-  <path fill="#000" d="M2 12h28v1H2z"/>
+  <defs>
+    <linearGradient id="back" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9fd0f5"/>
+      <stop offset="1" stop-color="#4a8fd0"/>
+    </linearGradient>
+    <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cfe9fb"/>
+      <stop offset="0.5" stop-color="#8dc4ef"/>
+      <stop offset="0.5" stop-color="#6aabe2"/>
+      <stop offset="1" stop-color="#3f7fc4"/>
+    </linearGradient>
+  </defs>
+  <!-- Dos du dossier, avec l'onglet -->
+  <path fill="url(#back)" d="M2 8a2 2 0 0 1 2-2h7l2.4 2.6H28a2 2 0 0 1 2 2V13H2Z"/>
+  <!-- Rabat avant, dégradé cassé en son milieu : le lustre d'Aqua -->
+  <path fill="url(#front)" d="M2 11h28a2 2 0 0 1 2 2l-2.6 11.4A2 2 0 0 1 27.4 26H4.6a2 2 0 0 1-2-1.6L0 13a2 2 0 0 1 2-2Z"/>
+  <!-- Reflet du rabat : une ellipse écrasée, pas une bande, sinon elle se lit
+       comme une étiquette collée. -->
+  <ellipse cx="16" cy="14.2" rx="12.5" ry="1.9" fill="#fff" opacity=".4"/>
 </svg>

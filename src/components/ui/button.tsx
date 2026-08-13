@@ -5,37 +5,38 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 /*
- * Bouton System 6.
+ * Bouton Aqua.
  *
- * Le bouton par défaut de l'époque porte un liseré épais : c'est lui qu'active
- * la touche Entrée. On le rend par un anneau, pas par une couleur — l'écran
- * n'en avait aucune.
- *
- * Le clic inverse la vidéo (noir et blanc permutés) plutôt que d'assombrir.
+ * Deux formes seulement à l'époque : le bouton par défaut, bleu lustré, qui
+ * répond à la touche Entrée, et le bouton blanc pour tout le reste. Le clic
+ * inverse le sens du dégradé — c'est ce qui donnait l'effet d'enfoncement.
  */
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center border border-black bg-white px-4 text-[13px] whitespace-nowrap select-none outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[14px] border text-[12px] whitespace-nowrap select-none outline-none transition-[background] focus-visible:ring-2 focus-visible:ring-ring/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
   {
     variants: {
       variant: {
         default:
-          "font-bold ring-2 ring-black ring-offset-2 active:bg-black active:text-white",
-        outline: "active:bg-black active:text-white",
-        secondary: "active:bg-black active:text-white",
-        ghost: "border-transparent active:bg-black active:text-white",
+          "border-[#1a4fae] bg-[linear-gradient(to_bottom,#8fc0ff,#4a8ae8_48%,#2f6fd8_52%,#1c5fd6)] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_1px_2px_rgba(0,0,0,.25)] active:bg-[linear-gradient(to_bottom,#1c5fd6,#2f6fd8_48%,#4a8ae8_52%,#8fc0ff)]",
+        outline:
+          "border-[#9a9a9a] bg-[linear-gradient(to_bottom,#ffffff,#e3e3e3)] text-[#333] shadow-[inset_0_1px_0_rgba(255,255,255,.8),0_1px_2px_rgba(0,0,0,.15)] active:bg-[linear-gradient(to_bottom,#dcdcdc,#f2f2f2)]",
+        secondary:
+          "border-[#9a9a9a] bg-[linear-gradient(to_bottom,#ffffff,#e3e3e3)] text-[#333] shadow-[inset_0_1px_0_rgba(255,255,255,.8),0_1px_2px_rgba(0,0,0,.15)] active:bg-[linear-gradient(to_bottom,#dcdcdc,#f2f2f2)]",
+        ghost:
+          "border-transparent text-[#333] hover:bg-black/5 active:bg-black/10",
         destructive:
-          "font-bold active:bg-black active:text-white",
-        link: "border-transparent px-0 underline underline-offset-2",
+          "border-[#9a2a22] bg-[linear-gradient(to_bottom,#f08a80,#d6483c_48%,#c8342a_52%,#a72a22)] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.4),0_1px_2px_rgba(0,0,0,.25)]",
+        link: "border-transparent px-0 text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-6",
-        xs: "h-5 px-2",
-        sm: "h-5 px-3",
-        lg: "h-7 px-5",
-        icon: "size-6 px-0",
+        default: "h-[22px] px-4",
+        xs: "h-5 px-2.5 text-[11px]",
+        sm: "h-5 px-3 text-[11px]",
+        lg: "h-[26px] px-5 text-[13px]",
+        icon: "size-[22px] px-0",
         "icon-xs": "size-5 px-0",
         "icon-sm": "size-5 px-0",
-        "icon-lg": "size-7 px-0",
+        "icon-lg": "size-[26px] px-0",
       },
     },
     defaultVariants: {

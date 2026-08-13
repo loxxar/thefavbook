@@ -3,12 +3,11 @@
 @import "shadcn/tailwind.css";
 
 /*
- * Thème Macintosh System 6.
+ * Thème Mac OS X 10.5 Leopard (Aqua).
  *
- * Contrainte de fond : l'écran d'origine est 1 bit. Il n'existe que du noir et
- * du blanc — les « gris » sont des trames de pixels alternés, jamais une
- * couleur. Tous les jetons de couleur valent donc #000 ou #fff, et les nuances
- * passent par des motifs ou par l'inversion vidéo.
+ * Tout repose sur des dégradés verticaux courts et des ombres portées :
+ * le chrome des fenêtres, les boutons pilule, la sélection bleue. Les valeurs
+ * sont reprises de la maquette de référence.
  */
 
 @theme inline {
@@ -33,91 +32,144 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 9px;
+  --radius-xl: 14px;
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
-  --card: #ffffff;
-  --card-foreground: #000000;
-  --popover: #ffffff;
-  --popover-foreground: #000000;
-  --primary: #000000;
-  --primary-foreground: #ffffff;
-  --secondary: #ffffff;
-  --secondary-foreground: #000000;
-  --muted: #ffffff;
-  --muted-foreground: #000000;
-  --accent: #000000;
-  --accent-foreground: #ffffff;
-  --destructive: #000000;
-  --border: #000000;
-  --input: #000000;
-  --ring: #000000;
-  --radius: 0px;
+  --chrome-light: #f2f2f2;
+  --chrome-dark: #c9c9c9;
+  --sidebar-top: #e6ebf4;
+  --sidebar-bottom: #d2d9e6;
+  --accent-top: #5b9bf5;
+  --accent-bottom: #1c5fd6;
 
-  /* Police système du Mac. Geneva existe encore sur macOS ; ailleurs on
-     retombe sur une sans-serif compacte. */
-  --font-sans: "ChicagoFLF", "Chicago", "Charcoal", "Geneva", "Tahoma",
-    "Verdana", sans-serif;
+  --background: #f2f2f2;
+  --foreground: #2b2b2b;
+  --card: #ffffff;
+  --card-foreground: #2b2b2b;
+  --popover: #ffffff;
+  --popover-foreground: #2b2b2b;
+  --primary: #1c5fd6;
+  --primary-foreground: #ffffff;
+  --secondary: #e3e3e3;
+  --secondary-foreground: #333333;
+  --muted: #eaeaea;
+  --muted-foreground: #6b7280;
+  --accent: #5b9bf5;
+  --accent-foreground: #ffffff;
+  --destructive: #c8342a;
+  --border: #8f8f8f;
+  --input: #a9a9a9;
+  --ring: #5b9bf5;
+  --radius: 9px;
+
+  --font-sans: "Lucida Grande", "Segoe UI", Helvetica, Arial, sans-serif;
 }
 
 @layer base {
-  * {
-    @apply border-border;
-    border-radius: 0 !important;
-  }
-
   html {
     @apply font-sans;
-    /* Le crénelage fait partie du rendu d'époque : les polices bitmap
-       n'étaient pas lissées. */
-    -webkit-font-smoothing: none;
-    -moz-osx-font-smoothing: unset;
-    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
   }
 
-  /* Le bureau : trame 50 %, un pixel sur deux. C'est le motif d'origine, pas
-     un gris — d'où les deux dégradés décalés d'un pixel. */
-  .mac-desktop {
-    background-color: #ffffff;
+  /*
+   * Le bureau Leopard : aurore violette en dégradés radiaux superposés, et une
+   * poussière d'étoiles. Chaque étoile est un dégradé radial d'un pixel — plus
+   * léger qu'une image, et net à tous les niveaux de zoom.
+   */
+  .aqua-desktop {
     background-image:
-      linear-gradient(
-        45deg,
-        #000 25%,
-        transparent 25%,
-        transparent 75%,
-        #000 75%
+      radial-gradient(
+        circle at 20% 15%,
+        rgba(255, 255, 255, 0.9) 0px,
+        rgba(255, 255, 255, 0.9) 1px,
+        transparent 1px
       ),
+      radial-gradient(
+        circle at 65% 8%,
+        rgba(255, 255, 255, 0.7) 0px,
+        rgba(255, 255, 255, 0.7) 1px,
+        transparent 1px
+      ),
+      radial-gradient(
+        circle at 80% 40%,
+        rgba(255, 255, 255, 0.8) 0px,
+        rgba(255, 255, 255, 0.8) 1px,
+        transparent 1px
+      ),
+      radial-gradient(
+        circle at 10% 60%,
+        rgba(255, 255, 255, 0.6) 0px,
+        rgba(255, 255, 255, 0.6) 1px,
+        transparent 1px
+      ),
+      radial-gradient(
+        circle at 45% 80%,
+        rgba(255, 255, 255, 0.9) 0px,
+        rgba(255, 255, 255, 0.9) 1px,
+        transparent 1px
+      ),
+      radial-gradient(
+        circle at 90% 85%,
+        rgba(255, 255, 255, 0.7) 0px,
+        rgba(255, 255, 255, 0.7) 1px,
+        transparent 1px
+      ),
+      radial-gradient(ellipse at 30% 30%, #7a3f8f 0%, transparent 55%),
+      radial-gradient(ellipse at 75% 65%, #3a2a6b 0%, transparent 55%),
       linear-gradient(
-        45deg,
-        #000 25%,
-        transparent 25%,
-        transparent 75%,
-        #000 75%
+        160deg,
+        #241b3f 0%,
+        #3d2166 35%,
+        #5c2a6b 65%,
+        #3a1a4a 100%
       );
-    background-size: 2px 2px;
-    background-position:
-      0 0,
-      1px 1px;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
   }
 
-  /* Rayures de la barre de titre d'une fenêtre active. */
-  .mac-title-stripes {
-    background-image: repeating-linear-gradient(
+  .aqua-window {
+    background: var(--chrome-light);
+    border: 1px solid #6b6b6b;
+    border-radius: 9px;
+    box-shadow:
+      0 25px 60px rgba(0, 0, 0, 0.55),
+      inset 0 2px 0 rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+  }
+
+  .aqua-titlebar {
+    background: linear-gradient(to bottom, #eeeeee, #c9c9c9);
+    border-bottom: 1px solid #9a9a9a;
+  }
+
+  .aqua-toolbar {
+    background: linear-gradient(to bottom, #f7f7f7, #d6d6d6);
+    border-bottom: 1px solid #aeaeae;
+  }
+
+  .aqua-statusbar {
+    background: linear-gradient(to bottom, #eaeaea, #cfcfcf);
+    border-top: 1px solid #aeaeae;
+  }
+
+  /* Barre de menus translucide, posée sur le bureau. */
+  .aqua-menubar {
+    background: linear-gradient(
       to bottom,
-      #000 0,
-      #000 1px,
-      transparent 1px,
-      transparent 3px
+      rgba(255, 255, 255, 0.92),
+      rgba(228, 228, 228, 0.88)
     );
+    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(6px);
   }
 }
