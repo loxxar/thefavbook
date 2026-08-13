@@ -1,7 +1,12 @@
 import { SignOutButton } from '@/components/auth/sign-out-button'
+import { BookmarkTree } from '@/components/bookmarks/bookmark-tree'
+import { ImportForm } from '@/components/bookmarks/import-form'
 import { MacWindow } from '@/components/mac/mac-window'
 import { MenuBar } from '@/components/mac/menu-bar'
+import { Button } from '@/components/ui/button'
 import { requireUser } from '@/lib/auth/session'
+import { readBookmarkTree } from '@/lib/bookmarks/tree'
+import { countBookmarks } from '@/lib/bookmarks/types'
 import { getPrisma } from '@/lib/db'
 
 export default async function HomePage() {
@@ -10,10 +15,12 @@ export default async function HomePage() {
 
   // Chaque requête filtre sur userId — c'est la seule barrière, voir
   // CONVENTIONS.md.
-  const [bookmarkCount, folderCount] = await Promise.all([
-    prisma.bookmark.count({ where: { userId: user.id } }),
+  const [nodes, folderCount] = await Promise.all([
+    readBookmarkTree(prisma, user.id),
     prisma.folder.count({ where: { userId: user.id } }),
   ])
+
+  const bookmarkCount = countBookmarks(nodes)
 
   return (
     <div className="aqua-desktop flex min-h-full flex-1 flex-col">
@@ -22,43 +29,37 @@ export default async function HomePage() {
         <SignOutButton />
       </MenuBar>
 
-      <div className="flex flex-1 justify-center p-4 sm:p-10">
+      <div className="flex flex-1 flex-col items-center gap-6 p-4 sm:p-10">
+        <MacWindow title="Importer" className="w-full max-w-[560px]">
+          <ImportForm />
+        </MacWindow>
+
         <MacWindow
           title="Mes favoris"
           status={`${bookmarkCount} favori${bookmarkCount > 1 ? 's' : ''}, ${folderCount} dossier${folderCount > 1 ? 's' : ''}`}
           className="h-fit w-full max-w-[560px]"
         >
-          <dl className="mb-5 flex gap-4">
-            <Counter label="Favoris" value={bookmarkCount} />
-            <Counter label="Dossiers" value={folderCount} />
-          </dl>
-
-          {bookmarkCount === 0 && (
+          {bookmarkCount === 0 ? (
             <p className="rounded-[6px] border border-dashed border-[#b3bac6] bg-[#f7f9fc] p-4 text-[12px] text-muted-foreground">
-              Aucun favori pour le moment. L&apos;import de fichiers de favoris
-              arrive à la prochaine étape du Lot&nbsp;1.
+              Aucun favori pour le moment. Déposez un export de navigateur dans
+              la fenêtre du dessus.
             </p>
+          ) : (
+            <>
+              <div className="mb-4 flex justify-end">
+                <Button variant="outline" size="sm" asChild>
+                  <a href="/api/export" download>
+                    Exporter en HTML
+                  </a>
+                </Button>
+              </div>
+              <div className="max-h-[420px] overflow-y-auto rounded-[6px] border border-[#d2d9e6] p-2">
+                <BookmarkTree nodes={nodes} />
+              </div>
+            </>
           )}
         </MacWindow>
       </div>
-    </div>
-  )
-}
-
-interface CounterProps {
-  label: string
-  value: number
-}
-
-function Counter({ label, value }: CounterProps) {
-  return (
-    <div className="flex-1 rounded-[6px] border border-[#b3bac6] bg-[linear-gradient(to_bottom,var(--sidebar-top),var(--sidebar-bottom))] p-3">
-      <dt className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
-        {label}
-      </dt>
-      <dd className="text-[26px] leading-tight font-semibold tabular-nums text-[#1f2937]">
-        {value}
-      </dd>
     </div>
   )
 }
