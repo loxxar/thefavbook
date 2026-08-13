@@ -1,5 +1,11 @@
+# pnpm refuse d'exécuter les scripts d'installation des dépendances tant
+# qu'elles ne figurent pas ici, et sort en erreur si l'une manque. Sur une
+# machine de développement le store garde les approbations passées et le
+# problème reste invisible ; une installation neuve (Vercel) échoue.
 onlyBuiltDependencies:
   - '@prisma/engines'
   - prisma
   - esbuild
+  # Résolveur natif d'eslint-config-next.
+  - unrs-resolver
   - sharp
