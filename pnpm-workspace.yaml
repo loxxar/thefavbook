@@ -1,11 +1,14 @@
-# pnpm refuse d'exécuter les scripts d'installation des dépendances tant
-# qu'elles ne figurent pas ici, et sort en erreur si l'une manque. Sur une
-# machine de développement le store garde les approbations passées et le
-# problème reste invisible ; une installation neuve (Vercel) échoue.
-onlyBuiltDependencies:
-  - '@prisma/engines'
-  - prisma
-  - esbuild
+# pnpm n'exécute les scripts d'installation d'une dépendance que si elle est
+# listée ici, et `strictDepBuilds` (actif par défaut depuis pnpm 10.3) fait
+# échouer l'installation quand l'une manque.
+#
+# POURQUOI `allowBuilds` et pas `onlyBuiltDependencies` : cette dernière clé a
+# été supprimée en pnpm 11, celui que déclare `packageManager`. Elle était donc
+# ignorée en silence. Invisible en local, où node_modules était déjà construit ;
+# fatal sur une installation neuve — c'est ce qui cassait le build Vercel.
+allowBuilds:
+  '@prisma/engines': true
+  prisma: true
+  esbuild: true
   # Résolveur natif d'eslint-config-next.
-  - unrs-resolver
-  - sharp
+  unrs-resolver: true
