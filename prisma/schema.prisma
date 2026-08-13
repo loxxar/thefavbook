@@ -1,0 +1,200 @@
+// Schéma thefavbook — voir ARCHITECTURE.md pour le raisonnement.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Authentification (Better-Auth)
+//
+// Champs recopiés du schéma interne de better-auth 1.6.26 (`getAuthTables`),
+// pas d'une version de sa CLI : celle-ci plafonne à 1.4 et produirait des
+// colonnes décalées. Toute montée de version de better-auth impose de
+// revérifier cette section.
+//
+// Les identifiants sont fournis par better-auth, d'où l'absence de `@default`.
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+
+  folders       Folder[]
+  bookmarks     Bookmark[]
+  tags          Tag[]
+  importBatches ImportBatch[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  /// Hash du mot de passe pour le fournisseur "credential". Jamais en clair.
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+/// Un import = un fichier HTML déposé. Conservé pour pouvoir répondre à
+/// « d'où vient ce favori ? » et pour annuler un import entier d'un bloc.
+model ImportBatch {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName      String
+  /// Libellé libre saisi à l'import ("Chrome perso", "Firefox boulot").
+  sourceLabel   String?
+  bookmarkCount Int      @default(0)
+  folderCount   Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  bookmarks Bookmark[]
+  folders   Folder[]
+
+  @@index([userId, createdAt])
+}
+
+model Folder {
+  id       String  @id @default(cuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentId String?
+  parent   Folder? @relation("FolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+
+  name      String
+  /// Rang au sein du parent. Les tris manuels doivent survivre au rechargement.
+  position  Int     @default(0)
+  /// Le dossier était la barre de favoris du navigateur d'origine.
+  isToolbar Boolean @default(false)
+
+  addDate      DateTime?
+  lastModified DateTime?
+
+  importBatchId String?
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  children  Folder[]   @relation("FolderTree")
+  bookmarks Bookmark[]
+
+  @@index([userId, parentId, position])
+}
+
+model Bookmark {
+  id       String  @id @default(cuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folderId String?
+  folder   Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  title        String
+  /// URL d'origine, jamais réécrite : c'est la donnée de l'utilisateur.
+  url          String  @db.Text
+  /// Clé de dédoublonnage dérivée de `url` (voir src/lib/bookmarks/url.ts).
+  /// Volontairement NON indexée : un index btree Postgres plafonne à ~2704
+  /// octets et une URL peut le dépasser. À l'échelle visée (quelques milliers
+  /// de lignes) le parcours séquentiel est sans effet mesurable.
+  canonicalUrl String  @db.Text
+  hostname     String?
+
+  description String? @db.Text
+  /// Favicon distant. Les data: URI inline des exports ne sont pas conservés,
+  /// ils pèsent des Mo pour rien.
+  faviconUrl  String? @db.Text
+
+  position     Int       @default(0)
+  addDate      DateTime?
+  lastModified DateTime?
+
+  importBatchId String?
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tags BookmarkTag[]
+
+  @@index([userId, folderId, position])
+  @@index([userId, hostname])
+}
+
+model Tag {
+  id     String  @id @default(cuid())
+  userId String
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  /// Couleur d'affichage, format hex court (#a1b2c3).
+  color  String?
+
+  createdAt DateTime @default(now())
+
+  bookmarks BookmarkTag[]
+
+  @@unique([userId, name])
+}
+
+model BookmarkTag {
+  bookmarkId String
+  bookmark   Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+  tagId      String
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([bookmarkId, tagId])
+  @@index([tagId])
+}
