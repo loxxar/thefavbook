@@ -1,4 +1,6 @@
 import { SignOutButton } from '@/components/auth/sign-out-button'
+import { MacWindow } from '@/components/mac/mac-window'
+import { MenuBar } from '@/components/mac/menu-bar'
 import { requireUser } from '@/lib/auth/session'
 import { getPrisma } from '@/lib/db'
 
@@ -14,38 +16,43 @@ export default async function HomePage() {
   ])
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 p-6">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">thefavbook</h1>
-          <p className="text-sm text-muted-foreground">{user.email}</p>
-        </div>
+    <>
+      <MenuBar>
+        <span className="hidden sm:inline">{user.email}</span>
         <SignOutButton />
-      </header>
+      </MenuBar>
 
-      <main className="flex flex-1 flex-col gap-6">
-        <dl className="grid grid-cols-2 gap-4">
-          <div className="rounded-lg border p-4">
-            <dt className="text-sm text-muted-foreground">Favoris</dt>
-            <dd className="text-2xl font-semibold tabular-nums">
-              {bookmarkCount}
-            </dd>
-          </div>
-          <div className="rounded-lg border p-4">
-            <dt className="text-sm text-muted-foreground">Dossiers</dt>
-            <dd className="text-2xl font-semibold tabular-nums">
-              {folderCount}
-            </dd>
-          </div>
-        </dl>
+      <div className="mac-desktop flex flex-1 justify-center p-4 sm:p-8">
+        <MacWindow title="Mes favoris" className="w-full max-w-[520px]">
+          <dl className="mb-4 flex gap-4">
+            <Counter label="Favoris" value={bookmarkCount} />
+            <Counter label="Dossiers" value={folderCount} />
+          </dl>
 
-        {bookmarkCount === 0 && (
-          <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-            Aucun favori pour le moment. L&apos;import de fichiers de favoris
-            arrive à la prochaine étape du Lot&nbsp;1.
-          </p>
-        )}
-      </main>
+          {bookmarkCount === 0 && (
+            <p className="border border-black p-3 text-[13px]">
+              Aucun favori pour le moment. L&apos;import de fichiers de favoris
+              arrive à la prochaine étape du Lot&nbsp;1.
+            </p>
+          )}
+        </MacWindow>
+      </div>
+    </>
+  )
+}
+
+interface CounterProps {
+  label: string
+  value: number
+}
+
+function Counter({ label, value }: CounterProps) {
+  return (
+    <div className="flex-1 border border-black p-3">
+      <dt className="text-[12px]">{label}</dt>
+      <dd className="text-[26px] leading-none font-bold tabular-nums">
+        {value}
+      </dd>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
+import { FieldError } from '@/components/mac/field-error'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -48,7 +49,7 @@ export function SignInForm() {
           {...register('email')}
         />
         {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
+          <FieldError>{errors.email.message ?? ''}</FieldError>
         )}
       </div>
 
@@ -62,7 +63,7 @@ export function SignInForm() {
           {...register('password')}
         />
         {errors.password && (
-          <p className="text-sm text-destructive">{errors.password.message}</p>
+          <FieldError>{errors.password.message ?? ''}</FieldError>
         )}
       </div>
 

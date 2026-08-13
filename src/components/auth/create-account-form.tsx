@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
+import { FieldError } from '@/components/mac/field-error'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -50,7 +51,7 @@ export function CreateAccountForm() {
           {...register('name')}
         />
         {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
+          <FieldError>{errors.name.message ?? ''}</FieldError>
         )}
       </div>
 
@@ -64,7 +65,7 @@ export function CreateAccountForm() {
           {...register('email')}
         />
         {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
+          <FieldError>{errors.email.message ?? ''}</FieldError>
         )}
       </div>
 
@@ -78,11 +79,11 @@ export function CreateAccountForm() {
           aria-describedby="password-hint"
           {...register('password')}
         />
-        <p id="password-hint" className="text-sm text-muted-foreground">
+        <p id="password-hint" className="text-[12px]">
           {PASSWORD_MIN_LENGTH} caractères minimum.
         </p>
         {errors.password && (
-          <p className="text-sm text-destructive">{errors.password.message}</p>
+          <FieldError>{errors.password.message ?? ''}</FieldError>
         )}
       </div>
 
