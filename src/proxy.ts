@@ -31,9 +31,13 @@ export function proxy(request: NextRequest): NextResponse {
 
 export const config = {
   matcher: [
-    // Tout sauf : les routes better-auth (elles doivent rester joignables
-    // sans session, sinon impossible de se connecter), les assets Next et les
-    // fichiers statiques.
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    // Tout sauf : les routes d'API, les assets Next et les fichiers statiques.
+    //
+    // POURQUOI exclure `/api` en entier : une redirection vers une page de
+    // connexion n'a pas de sens pour un appel programmatique. `/api/auth` doit
+    // rester joignable sans session — sinon impossible de se connecter — et
+    // `/api/export` doit répondre 401 plutôt que de servir du HTML à la place
+    // du fichier attendu. Chaque route d'API vérifie donc elle-même la session.
+    '/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }
