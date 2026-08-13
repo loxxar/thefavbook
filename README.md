@@ -46,6 +46,26 @@ pnpm db:migrate
 pnpm dev
 ```
 
+## Déploiement
+
+Production : https://thefavbook.nodev.tn (Vercel), base Neon.
+
+La commande de build est réglée **dans les réglages du projet Vercel**, pas
+dans ce dépôt :
+
+```
+prisma generate && prisma migrate deploy && next build
+```
+
+- `prisma generate` : le client est émis dans `src/generated/prisma`, hors de
+  `node_modules`, donc absent du cache de build. Sans cette étape, un
+  déploiement qui réutilise le cache échoue sur un module introuvable.
+- `prisma migrate deploy` : applique les migrations en attente. `pnpm build`
+  reste volontairement sans effet sur la base.
+
+Quatre variables sont attendues : `DATABASE_URL`, `DIRECT_URL`,
+`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`.
+
 ## Scripts
 
 | Commande | Effet |
