@@ -21,6 +21,9 @@ const DEFAULT_MODEL = 'gemini-2.5-flash'
 
 export class GeminiError extends Error {}
 
+/** Quota dépassé : distinct d'une panne, l'appel réussira plus tard. */
+export class GeminiQuotaError extends GeminiError {}
+
 function readApiKey(): string {
   const key = process.env.GEMINI_API_KEY
 
@@ -76,6 +79,12 @@ export async function generateJson<T>(
   )
 
   const payload = (await response.json()) as GeminiResponse
+
+  if (response.status === 429) {
+    throw new GeminiQuotaError(
+      'Quota Gemini atteint. Le palier gratuit autorise 10 requêtes par minute et 250 par jour.',
+    )
+  }
 
   if (!response.ok) {
     throw new GeminiError(

@@ -1,15 +1,23 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
 import { classifyNextBatchAction } from '@/lib/ai/actions'
+import {
+  DELAY_BETWEEN_BATCHES_MS,
+  QUOTA_COOLDOWN_MS,
+} from '@/lib/ai/state'
 import { setAiConsentAction } from '@/lib/auth/account-actions'
 import { Button } from '@/components/ui/button'
 
 interface ClassifyPanelProps {
   hasConsent: boolean
   unclassifiedCount: number
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export function ClassifyPanel({
@@ -19,10 +27,18 @@ export function ClassifyPanel({
   const [isPending, startTransition] = useTransition()
   const [remaining, setRemaining] = useState<number | null>(null)
   const [isRunning, setIsRunning] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+  const stopRef = useRef(false)
 
   const total = unclassifiedCount
   const done = remaining === null ? 0 : total - remaining
   const percent = total === 0 ? 100 : Math.round((done / total) * 100)
+
+  // Une quarantaine de lots à six secondes et demie : l'ordre de grandeur
+  // mérite d'être annoncé avant de lancer, pas découvert en attendant.
+  const estimatedMinutes = Math.ceil(
+    (Math.ceil(total / 100) * DELAY_BETWEEN_BATCHES_MS) / 60_000,
+  )
 
   function grantConsent() {
     startTransition(async () => {
@@ -33,11 +49,19 @@ export function ClassifyPanel({
   /**
    * Le serveur ne traite qu'un lot par appel : on le rappelle jusqu'à
    * épuisement. C'est ce qui donne une progression réelle, chiffrée.
+   *
+   * La cadence est imposée par le palier gratuit — 10 requêtes par minute.
+   * Sans pause, une collection de 4000 favoris se ferait rejeter dès le
+   * onzième lot.
    */
   async function runClassification() {
     setIsRunning(true)
+    stopRef.current = false
+    let quotaRetried = false
 
     for (;;) {
+      if (stopRef.current) break
+
       const result = await classifyNextBatchAction()
 
       if (result.status === 'error') {
@@ -51,8 +75,27 @@ export function ClassifyPanel({
         toast.success('Analyse terminée.')
         break
       }
+
+      if (result.status === 'quota') {
+        if (quotaRetried) {
+          toast.error(
+            `${result.message} Les favoris déjà analysés sont conservés : relancez plus tard.`,
+          )
+          break
+        }
+
+        quotaRetried = true
+        setNotice('Quota atteint, reprise dans une minute…')
+        await wait(QUOTA_COOLDOWN_MS)
+        setNotice(null)
+        continue
+      }
+
+      quotaRetried = false
+      await wait(DELAY_BETWEEN_BATCHES_MS)
     }
 
+    setNotice(null)
     setIsRunning(false)
   }
 
@@ -92,7 +135,7 @@ export function ClassifyPanel({
         déplacé sans votre accord.
       </p>
 
-      {isRunning && (
+      {isRunning ? (
         <div className="space-y-1.5">
           <div
             className="aqua-progress"
@@ -108,14 +151,33 @@ export function ClassifyPanel({
             />
           </div>
           <p className="text-[11px] text-muted-foreground">
-            {done} sur {total} analysés.
+            {notice ?? `${done} sur ${total} analysés.`}
           </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              stopRef.current = true
+              setNotice('Arrêt après le lot en cours…')
+            }}
+          >
+            Arrêter
+          </Button>
         </div>
+      ) : (
+        <>
+          <Button type="button" onClick={runClassification}>
+            Proposer un rangement
+          </Button>
+          <p className="text-[11px] text-muted-foreground">
+            Environ {estimatedMinutes} minute
+            {estimatedMinutes > 1 ? 's' : ''} : le service gratuit limite à dix
+            requêtes par minute, l&apos;analyse avance par lots de cent. Vous
+            pouvez l&apos;interrompre, ce qui est déjà analysé est conservé.
+          </p>
+        </>
       )}
-
-      <Button type="button" onClick={runClassification} disabled={isRunning}>
-        {isRunning ? 'Analyse en cours…' : 'Proposer un rangement'}
-      </Button>
     </div>
   )
 }
