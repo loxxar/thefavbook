@@ -88,6 +88,7 @@ export default async function HomePage() {
             <ClassifyPanel
               hasConsent={account?.aiConsentAt != null}
               unclassifiedCount={unclassifiedCount}
+              pendingCount={pendingCount}
             />
           </MacWindow>
         )}

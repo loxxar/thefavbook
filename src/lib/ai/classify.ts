@@ -1,4 +1,5 @@
 import { generateJson, type JsonSchema } from '@/lib/ai/openrouter'
+import type { ClassificationStyle } from '@/lib/ai/styles'
 
 /**
  * Classement d'un lot de favoris.
@@ -60,6 +61,7 @@ const responseSchema: JsonSchema = {
 function buildPrompt(
   bookmarks: readonly BookmarkToClassify[],
   knownFolders: readonly string[],
+  style: ClassificationStyle,
 ): string {
   const folders =
     knownFolders.length > 0
@@ -72,27 +74,30 @@ function buildPrompt(
 
   return `Tu ranges des favoris de navigateur dans une arborescence de dossiers.
 
+Critère de rangement demandé : ${style.label.toLowerCase()}.
+${style.rules}
+
 Dossiers déjà existants, à réutiliser en priorité :
 ${folders}
 
-Règles :
+Règles communes :
 - Réutilise un dossier existant dès qu'il convient, même approximativement.
 - N'en crée un nouveau que si aucun ne convient vraiment.
-- Deux niveaux au maximum, séparés par " / ". Exemple : "Développement / Documentation".
 - Les noms de dossiers sont en français, courts, au pluriel quand c'est naturel.
-- Vise entre 10 et 30 dossiers au total pour une collection entière.
 - Si le titre est inexploitable ("Untitled", "Home", "(1) ...", une suite de
-  chiffres), propose un titre clair déduit de l'URL. Sinon, renvoie une chaîne vide.
+  chiffres), propose un titre clair déduit de l'adresse. Sinon renvoie une
+  chaîne vide.
 - Justifie chaque rangement en une ligne, en français.
 
-Favoris à ranger, un par ligne, au format identifiant, titre puis URL séparés
-par une tabulation :
+Favoris à ranger, un par ligne, au format identifiant, titre puis adresse
+séparés par une tabulation :
 ${items}`
 }
 
 export async function classifyBookmarks(
   bookmarks: readonly BookmarkToClassify[],
   knownFolders: readonly string[],
+  style: ClassificationStyle,
 ): Promise<ClassifiedBookmark[]> {
   if (bookmarks.length === 0) return []
 
@@ -103,7 +108,11 @@ export async function classifyBookmarks(
       title?: string
       reason: string
     }[]
-  }>(buildPrompt(bookmarks, knownFolders), 'rangement_favoris', responseSchema)
+  }>(
+    buildPrompt(bookmarks, knownFolders, style),
+    'rangement_favoris',
+    responseSchema,
+  )
 
   const wanted = new Set(bookmarks.map((b) => b.id))
 

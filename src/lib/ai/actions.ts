@@ -6,6 +6,7 @@ import { requireUser } from '@/lib/auth/session'
 import { CLASSIFY_BATCH_SIZE, classifyBookmarks } from '@/lib/ai/classify'
 import { AiError, AiQuotaError } from '@/lib/ai/openrouter'
 import type { ClassifyBatchResult } from '@/lib/ai/state'
+import { findStyle } from '@/lib/ai/styles'
 import { getPrisma } from '@/lib/db'
 
 /**
@@ -17,7 +18,9 @@ import { getPrisma } from '@/lib/db'
  * rappelle donc cette action jusqu'à épuisement — ce qui donne au passage une
  * progression réelle plutôt qu'une jauge indéterminée.
  */
-export async function classifyNextBatchAction(): Promise<ClassifyBatchResult> {
+export async function classifyNextBatchAction(
+  styleId: string,
+): Promise<ClassifyBatchResult> {
   const user = await requireUser()
   const prisma = getPrisma()
 
@@ -78,7 +81,13 @@ export async function classifyNextBatchAction(): Promise<ClassifyBatchResult> {
   ]
 
   try {
-    const assignments = await classifyBookmarks(pending, knownFolders)
+    const assignments = await classifyBookmarks(
+      pending,
+      knownFolders,
+      // `findStyle` retombe sur le style par défaut : un identifiant inconnu
+      // ne doit pas faire échouer l'analyse.
+      findStyle(styleId),
+    )
 
     if (assignments.length > 0) {
       await prisma.suggestion.createMany({
@@ -207,4 +216,26 @@ export async function acceptAllSuggestionsAction(): Promise<number> {
   }
 
   return pending.length
+}
+
+/**
+ * Efface les propositions en attente.
+ *
+ * Sert à repartir d'une page blanche quand on change de style : mêler deux
+ * logiques de rangement produirait une arborescence bâtarde, moitié par thème
+ * moitié par plateforme.
+ *
+ * Les propositions déjà acceptées ne sont pas touchées — les favoris ont été
+ * déplacés, revenir dessus serait une autre opération.
+ */
+export async function clearPendingSuggestionsAction(): Promise<number> {
+  const user = await requireUser()
+
+  const { count } = await getPrisma().suggestion.deleteMany({
+    where: { userId: user.id, status: 'PENDING' },
+  })
+
+  revalidatePath('/')
+
+  return count
 }
