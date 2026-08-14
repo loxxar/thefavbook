@@ -34,8 +34,8 @@ export function ClassifyPanel({
   const done = remaining === null ? 0 : total - remaining
   const percent = total === 0 ? 100 : Math.round((done / total) * 100)
 
-  // Une quarantaine de lots à six secondes et demie : l'ordre de grandeur
-  // mérite d'être annoncé avant de lancer, pas découvert en attendant.
+  // L'ordre de grandeur mérite d'être annoncé avant de lancer, pas découvert
+  // en attendant.
   const estimatedMinutes = Math.ceil(
     (Math.ceil(total / 100) * DELAY_BETWEEN_BATCHES_MS) / 60_000,
   )
@@ -50,9 +50,9 @@ export function ClassifyPanel({
    * Le serveur ne traite qu'un lot par appel : on le rappelle jusqu'à
    * épuisement. C'est ce qui donne une progression réelle, chiffrée.
    *
-   * La cadence est imposée par le palier gratuit — 10 requêtes par minute.
-   * Sans pause, une collection de 4000 favoris se ferait rejeter dès le
-   * onzième lot.
+   * La cadence est imposée par le palier gratuit — quinze requêtes par minute
+   * sur Flash-Lite. Sans pause, une collection de 4000 favoris se ferait
+   * rejeter dès le seizième lot.
    */
   async function runClassification() {
     setIsRunning(true)
@@ -172,7 +172,7 @@ export function ClassifyPanel({
           </Button>
           <p className="text-[11px] text-muted-foreground">
             Environ {estimatedMinutes} minute
-            {estimatedMinutes > 1 ? 's' : ''} : le service gratuit limite à dix
+            {estimatedMinutes > 1 ? 's' : ''} : le service gratuit limite à quinze
             requêtes par minute, l&apos;analyse avance par lots de cent. Vous
             pouvez l&apos;interrompre, ce qui est déjà analysé est conservé.
           </p>

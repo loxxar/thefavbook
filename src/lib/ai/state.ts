@@ -17,11 +17,12 @@ export interface ClassifyBatchResult {
 /**
  * Pause entre deux lots, côté client.
  *
- * Le palier gratuit de Gemini autorise 10 requêtes par minute. Une collection
- * de 4000 favoris demande une quarantaine de lots : sans pause, le onzième
- * serait rejeté. Six secondes et demie laissent une marge.
+ * Flash-Lite autorise 15 requêtes par minute en gratuit, soit une toutes les
+ * quatre secondes. Sans pause, une collection de 4000 favoris — une
+ * quarantaine de lots — se ferait rejeter dès le seizième. Quatre secondes et
+ * demie laissent une marge.
  */
-export const DELAY_BETWEEN_BATCHES_MS = 6_500
+export const DELAY_BETWEEN_BATCHES_MS = 4_500
 
 /** Attente après un dépassement de quota, avant une seule nouvelle tentative. */
 export const QUOTA_COOLDOWN_MS = 60_000

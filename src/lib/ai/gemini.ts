@@ -14,10 +14,15 @@
 const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models'
 
 /**
+ * Flash-Lite plutôt que Flash : c'est celui que le compte peut appeler, et il
+ * offre le plafond gratuit le plus large (15 requêtes par minute, 1000 par
+ * jour contre 250). La tâche — ranger des titres dans des dossiers — ne
+ * demande pas le modèle le plus fin.
+ *
  * Les modèles 2.5 sont annoncés pour extinction le 16 octobre 2026 : le nom
- * est donc réglable sans redéploiement.
+ * reste réglable par GEMINI_MODEL, sans redéploiement.
  */
-const DEFAULT_MODEL = 'gemini-2.5-flash'
+const DEFAULT_MODEL = 'gemini-2.5-flash-lite'
 
 export class GeminiError extends Error {}
 
