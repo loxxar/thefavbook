@@ -7,7 +7,7 @@ import {
 } from '@/components/ai/suggestion-list'
 import { DeleteAccountButton } from '@/components/auth/delete-account-button'
 import { SignOutButton } from '@/components/auth/sign-out-button'
-import { BookmarkTree } from '@/components/bookmarks/bookmark-tree'
+import { BookmarkBrowser } from '@/components/bookmarks/bookmark-browser'
 import { ImportForm } from '@/components/bookmarks/import-form'
 import { MacWindow } from '@/components/mac/mac-window'
 import { MenuBar } from '@/components/mac/menu-bar'
@@ -76,7 +76,7 @@ export default async function HomePage() {
         <SignOutButton />
       </MenuBar>
 
-      <div className="mx-auto flex w-full max-w-[1180px] min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4 sm:p-6">
+      <div className="mx-auto flex w-full max-w-[1400px] min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4 sm:p-6">
         {bookmarkCount === 0 && (
           <MacWindow title="Importer" className="shrink-0">
             <ImportForm />
@@ -131,9 +131,7 @@ export default async function HomePage() {
                   </a>
                 </Button>
               </div>
-              <div className="min-h-0 flex-1 overflow-y-auto rounded-[6px] border border-[#d2d9e6] p-2">
-                <BookmarkTree nodes={nodes} />
-              </div>
+              <BookmarkBrowser nodes={nodes} />
             </>
           )}
         </MacWindow>

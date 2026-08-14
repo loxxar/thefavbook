@@ -6,6 +6,12 @@
 
 export interface ParsedBookmark {
   kind: 'bookmark'
+  /**
+   * Identifiant en base, renseigné uniquement quand l'arbre est relu depuis la
+   * base. Le parseur ne le connaît pas : à la lecture d'un fichier, le favori
+   * n'existe pas encore.
+   */
+  id?: string
   title: string
   /** URL telle qu'écrite dans le fichier source, jamais réécrite. */
   url: string

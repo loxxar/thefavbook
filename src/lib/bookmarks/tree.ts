@@ -31,6 +31,7 @@ export async function readBookmarkTree(
       where: { userId },
       orderBy: [{ position: 'asc' }, { title: 'asc' }],
       select: {
+        id: true,
         folderId: true,
         title: true,
         url: true,
@@ -76,6 +77,7 @@ export async function readBookmarkTree(
   for (const bookmark of bookmarks) {
     bucket(bookmark.folderId).push({
       kind: 'bookmark',
+      id: bookmark.id,
       title: bookmark.title,
       url: bookmark.url,
       addDate: bookmark.addDate,
