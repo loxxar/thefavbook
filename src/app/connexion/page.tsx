@@ -1,40 +1,17 @@
 import type { Metadata } from 'next'
 
-import { CreateAccountForm } from '@/components/auth/create-account-form'
-import { SignInForm } from '@/components/auth/sign-in-form'
+import { AuthPanel } from '@/components/auth/auth-panel'
 import { MacWindow } from '@/components/mac/mac-window'
-import { accountExists } from '@/lib/auth/session'
 
 export const metadata: Metadata = {
   title: 'Connexion — thefavbook',
 }
 
-/**
- * POURQUOI force-dynamic : la page interroge la base pour savoir si un compte
- * existe, sans passer par aucune API de requête. Next la prérendrait donc à la
- * compilation, et elle continuerait d'afficher le formulaire de création après
- * que le compte a été créé.
- *
- * FIXME si Cache Components est un jour activé : `dynamic` disparaît en Next 16
- * dans ce mode, il faudra basculer sur `connection()` ou un `use cache` négatif.
- */
-export const dynamic = 'force-dynamic'
-
-export default async function ConnexionPage() {
-  const hasAccount = await accountExists()
-
+export default function ConnexionPage() {
   return (
     <div className="aqua-desktop flex flex-1 items-center justify-center p-4">
-      <MacWindow
-        title={hasAccount ? 'Connexion' : 'Bienvenue'}
-        className="w-full max-w-[340px]"
-      >
-        <p className="mb-5 text-[12px] text-muted-foreground">
-          {hasAccount
-            ? 'Accédez à vos favoris.'
-            : "Cette instance n'accepte qu'un seul compte. C'est le vôtre."}
-        </p>
-        {hasAccount ? <SignInForm /> : <CreateAccountForm />}
+      <MacWindow title="thefavbook" className="w-full max-w-[340px]">
+        <AuthPanel />
       </MacWindow>
     </div>
   )

@@ -14,15 +14,22 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const SIGN_IN_PATH = '/connexion'
 
+/**
+ * Pages consultables sans compte. La confidentialité en fait partie : exiger
+ * un compte pour lire ce qu'on fait des données serait exactement l'inverse du
+ * but recherché.
+ */
+const PUBLIC_PATHS = new Set([SIGN_IN_PATH, '/confidentialite'])
+
 export function proxy(request: NextRequest): NextResponse {
   const hasSessionCookie = getSessionCookie(request) !== null
-  const isSignInPage = request.nextUrl.pathname === SIGN_IN_PATH
+  const { pathname } = request.nextUrl
 
-  if (!hasSessionCookie && !isSignInPage) {
+  if (!hasSessionCookie && !PUBLIC_PATHS.has(pathname)) {
     return NextResponse.redirect(new URL(SIGN_IN_PATH, request.url))
   }
 
-  if (hasSessionCookie && isSignInPage) {
+  if (hasSessionCookie && pathname === SIGN_IN_PATH) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 

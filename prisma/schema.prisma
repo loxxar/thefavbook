@@ -29,8 +29,13 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  sessions Session[]
-  accounts Account[]
+  /// Date du consentement à l'envoi des titres et URL au service de
+  /// classement. Null tant qu'il n'a pas été donné : aucune donnée ne sort.
+  aiConsentAt DateTime?
+
+  sessions    Session[]
+  accounts    Account[]
+  suggestions Suggestion[]
 
   folders       Folder[]
   bookmarks     Bookmark[]
@@ -75,6 +80,16 @@ model Account {
 
   @@index([userId])
   @@map("account")
+}
+
+/// Compteur de limitation de débit géré par better-auth.
+model RateLimit {
+  id          String @id
+  key         String
+  count       Int
+  lastRequest BigInt
+
+  @@map("rateLimit")
 }
 
 model Verification {
@@ -168,7 +183,8 @@ model Bookmark {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tags BookmarkTag[]
+  tags       BookmarkTag[]
+  suggestion Suggestion?
 
   @@index([userId, folderId, position])
   @@index([userId, hostname])
@@ -197,4 +213,38 @@ model BookmarkTag {
 
   @@id([bookmarkId, tagId])
   @@index([tagId])
+}
+
+/// Proposition de classement produite par l'IA, en attente d'arbitrage.
+///
+/// POURQUOI un chemin en texte et pas une clé étrangère vers Folder : le
+/// dossier proposé n'existe pas encore au moment de la suggestion. Il n'est
+/// créé qu'à l'acceptation.
+model Suggestion {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bookmarkId String
+  bookmark   Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+
+  /// Chemin proposé, niveaux séparés par « / ».
+  folderPath String
+  /// Titre réécrit quand l'original est inexploitable (Untitled, Home...).
+  title      String?
+  /// Justification courte, affichée au triage.
+  reason     String?
+
+  status    SuggestionStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  decidedAt DateTime?
+
+  @@unique([bookmarkId])
+  @@index([userId, status])
+}
+
+enum SuggestionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }

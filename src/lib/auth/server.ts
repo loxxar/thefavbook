@@ -8,11 +8,12 @@ import { getPrisma } from '@/lib/db'
 /**
  * Authentification.
  *
- * POURQUOI de l'auth sur un outil mono-utilisateur : la base est hébergée
- * (Neon), donc joignable depuis internet — voir DECISIONS.md.
+ * L'instance est ouverte : chacun crée son compte et ne voit que ses favoris.
+ * Le cloisonnement repose entièrement sur le filtrage par `userId` — voir
+ * CONVENTIONS.md.
  *
  * POURQUOI e-mail + mot de passe et rien d'autre : aucun tiers à qui confier
- * l'identité, aucun service d'envoi d'e-mails à brancher pour un seul compte.
+ * l'identité de ses utilisateurs.
  *
  * POURQUOI `getAuth()` et pas un `export const auth` : construire l'instance
  * exige DATABASE_URL et BETTER_AUTH_SECRET. `next build` évalue le code de
@@ -21,9 +22,6 @@ import { getPrisma } from '@/lib/db'
  */
 
 type Auth = ReturnType<typeof createAuth>
-
-const SINGLE_ACCOUNT_MESSAGE =
-  "Cette instance n'accepte qu'un seul compte, et il existe déjà."
 
 declare global {
   // Réutilisé entre les rechargements à chaud, comme le client Prisma.
@@ -86,31 +84,24 @@ function createAuth() {
       autoSignIn: true,
     },
 
-    session: {
-      // 30 jours : outil personnel, pas une banque.
-      expiresIn: 60 * 60 * 24 * 30,
-      updateAge: 60 * 60 * 24,
+    // Le stockage en base plutôt qu'en mémoire : sur Vercel chaque requête peut
+    // atterrir sur une instance différente, un compteur en mémoire ne verrait
+    // qu'une fraction du trafic et ne limiterait rien.
+    rateLimit: {
+      enabled: true,
+      storage: 'database',
+      window: 60,
+      max: 60,
+      customRules: {
+        '/sign-up/email': { window: 3600, max: 5 },
+        '/sign-in/email': { window: 300, max: 10 },
+      },
     },
 
-    databaseHooks: {
-      user: {
-        create: {
-          /**
-           * Verrou du compte unique.
-           *
-           * POURQUOI ici et pas `disableSignUp` : il faut pouvoir créer le
-           * premier compte sans redéployer avec l'option inversée. Le premier
-           * inscrit gagne, les suivants sont refusés.
-           */
-          before: async () => {
-            const existing = await getPrisma().user.count()
-
-            if (existing > 0) {
-              throw new Error(SINGLE_ACCOUNT_MESSAGE)
-            }
-          },
-        },
-      },
+    session: {
+      // 30 jours : un gestionnaire de favoris, pas une banque.
+      expiresIn: 60 * 60 * 24 * 30,
+      updateAge: 60 * 60 * 24,
     },
 
     // Doit rester en dernier : ce plugin écrit les cookies dans la réponse

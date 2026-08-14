@@ -39,13 +39,12 @@ export async function requireUser(): Promise<SessionUser> {
   return user
 }
 
-/**
- * Un compte existe-t-il déjà ?
- *
- * L'instance n'en accepte qu'un : tant qu'il n'y en a aucun, l'écran de
- * connexion propose la création. Le verrou réel reste le hook `user.create`
- * de better-auth — ceci ne fait que choisir quel formulaire afficher.
- */
-export async function accountExists(): Promise<boolean> {
-  return (await getPrisma().user.count()) > 0
+/** Consentement à l'envoi des titres et URL au service de classement. */
+export async function hasAiConsent(userId: string): Promise<boolean> {
+  const user = await getPrisma().user.findUnique({
+    where: { id: userId },
+    select: { aiConsentAt: true },
+  })
+
+  return user?.aiConsentAt != null
 }
