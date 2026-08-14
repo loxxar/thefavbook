@@ -1,33 +1,154 @@
-import type { ReactNode } from 'react'
+'use client'
 
-interface MenuBarProps {
-  /** Rendu à droite de la barre : compte, déconnexion. */
-  children?: ReactNode
-}
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 /**
- * Barre de menus Leopard : translucide, posée sur le bureau.
+ * Barre de menus Leopard, réellement fonctionnelle.
  *
- * Volontairement sans menus déroulants : les « Fichier / Édition / Présentation »
- * d'époque n'auraient rien à ouvrir ici. On garde la forme, on ne simule pas
- * des commandes inexistantes.
+ * Les menus n'existent que s'ils contiennent de vraies commandes. Reproduire
+ * « Fichier / Édition / Présentation » pour la forme ferait des affordances
+ * menteuses.
  */
-export function MenuBar({ children }: MenuBarProps) {
+
+export interface MenuItem {
+  label: string
+  /** Absent : l'entrée est un simple libellé, non cliquable. */
+  onSelect?: () => void
+  href?: string
+  /** Trait de séparation au-dessus de l'entrée. */
+  separatorBefore?: boolean
+  disabled?: boolean
+}
+
+export interface Menu {
+  label: string
+  /** Rendu à la place du libellé, pour la pomme. */
+  icon?: ReactNode
+  items: MenuItem[]
+}
+
+interface MenuBarProps {
+  menus: Menu[]
+  /** Affiché à droite de la barre. */
+  trailing?: ReactNode
+}
+
+export function MenuBar({ menus, trailing }: MenuBarProps) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const barRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (openIndex === null) return
+
+    function onPointerDown(event: PointerEvent) {
+      if (!barRef.current?.contains(event.target as Node)) setOpenIndex(null)
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpenIndex(null)
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [openIndex])
+
   return (
-    <div className="aqua-menubar sticky top-0 z-50 flex h-[24px] shrink-0 items-center justify-between px-3 text-[13px] text-[#2b2b2b]">
-      <div className="flex items-center gap-4">
-        <AppleMark />
-        <span className="font-semibold">thefavbook</span>
+    <div
+      ref={barRef}
+      className="aqua-menubar sticky top-0 z-50 flex h-[24px] shrink-0 items-center justify-between px-2 text-[13px] text-[#2b2b2b]"
+    >
+      <div className="flex items-center">
+        {menus.map((menu, index) => (
+          <div key={menu.label} className="relative">
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={openIndex === index}
+              onClick={() => setOpenIndex(openIndex === index ? null : index)}
+              // Une fois un menu ouvert, survoler les autres les ouvre :
+              // c'est le comportement d'origine.
+              onPointerEnter={() => openIndex !== null && setOpenIndex(index)}
+              className={`flex h-[24px] items-center gap-1.5 px-2.5 ${
+                openIndex === index
+                  ? 'bg-[linear-gradient(to_bottom,var(--accent-top),var(--accent-bottom))] text-white'
+                  : 'hover:bg-black/5'
+              }`}
+            >
+              {menu.icon ?? <span className="font-semibold">{menu.label}</span>}
+            </button>
+
+            {openIndex === index && (
+              <ul
+                role="menu"
+                className="absolute top-[24px] left-0 min-w-[220px] rounded-b-[5px] border border-[#8f8f8f] border-t-0 bg-[#f7f7f7] py-1 shadow-[0_8px_20px_rgba(0,0,0,.35)]"
+              >
+                {menu.items.map((item) => (
+                  <li key={item.label} role="none">
+                    {item.separatorBefore === true && (
+                      <hr className="my-1 border-[#d9d9d9]" />
+                    )}
+                    <MenuEntry
+                      item={item}
+                      onDone={() => setOpenIndex(null)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
       </div>
-      <div className="flex items-center gap-3">{children}</div>
+
+      <div className="flex items-center gap-3 pr-1">{trailing}</div>
     </div>
   )
 }
 
-/** Pomme du menu, en dégradé gris comme sous Leopard. */
-function AppleMark() {
+function MenuEntry({ item, onDone }: { item: MenuItem; onDone: () => void }) {
+  const shared =
+    'block w-full px-3 py-[3px] text-left text-[13px] hover:bg-[linear-gradient(to_bottom,var(--accent-top),var(--accent-bottom))] hover:text-white'
+
+  if (item.onSelect === undefined && item.href === undefined) {
+    return (
+      <span className="block px-3 py-[3px] text-[12px] text-muted-foreground">
+        {item.label}
+      </span>
+    )
+  }
+
+  if (item.href !== undefined) {
+    return (
+      <a href={item.href} role="menuitem" className={shared} onClick={onDone}>
+        {item.label}
+      </a>
+    )
+  }
+
   return (
-    <svg width="13" height="15" viewBox="0 0 100 100" aria-hidden="true">
+    <button
+      type="button"
+      role="menuitem"
+      disabled={item.disabled}
+      className={`${shared} disabled:pointer-events-none disabled:opacity-40`}
+      onClick={() => {
+        item.onSelect?.()
+        onDone()
+      }}
+    >
+      {item.label}
+    </button>
+  )
+}
+
+/** Pomme du menu, en dégradé gris comme sous Leopard. */
+export function AppleMark() {
+  return (
+    <svg width="13" height="15" viewBox="0 0 100 100" aria-label="Menu Pomme">
       <defs>
         <linearGradient id="menu-apple" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#6f6f6f" />

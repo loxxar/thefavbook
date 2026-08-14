@@ -39,7 +39,7 @@ export function SuggestionList({
   if (totalPending === 0) return null
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
       <div className="flex shrink-0 items-center justify-between">
         <p className="text-[12px]">
           {totalPending} proposition{totalPending > 1 ? 's' : ''} en attente

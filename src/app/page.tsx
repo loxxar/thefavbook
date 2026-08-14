@@ -1,17 +1,11 @@
-import Link from 'next/link'
-
 import { ClassifyPanel } from '@/components/ai/classify-panel'
 import {
   SuggestionList,
   type SuggestionRow,
 } from '@/components/ai/suggestion-list'
-import { DeleteAccountButton } from '@/components/auth/delete-account-button'
-import { SignOutButton } from '@/components/auth/sign-out-button'
 import { BookmarkBrowser } from '@/components/bookmarks/bookmark-browser'
-import { ExportButton } from '@/components/bookmarks/export-button'
-import { ImportForm } from '@/components/bookmarks/import-form'
+import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { MacWindow } from '@/components/mac/mac-window'
-import { MenuBar } from '@/components/mac/menu-bar'
 import { requireUser } from '@/lib/auth/session'
 import { readBookmarkTree } from '@/lib/bookmarks/tree'
 import { countBookmarks } from '@/lib/bookmarks/types'
@@ -64,82 +58,64 @@ export default async function HomePage() {
   }))
 
   return (
-    <div className="aqua-desktop flex h-dvh flex-col">
-      <MenuBar>
-        <Link
-          href="/confidentialite"
-          className="hidden text-[12px] underline underline-offset-2 sm:inline"
-        >
-          Confidentialité
-        </Link>
-        <span className="hidden text-[12px] sm:inline">{user.email}</span>
-        <SignOutButton />
-      </MenuBar>
-
-      <div className="mx-auto flex w-full max-w-[1400px] min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4 sm:p-6">
-        {bookmarkCount === 0 && (
-          <MacWindow title="Importer" className="shrink-0">
-            <ImportForm />
-          </MacWindow>
-        )}
-
+    <DashboardShell
+      email={user.email}
+      bookmarkCount={bookmarkCount}
+      folderCount={folderCount}
+    >
+      {/*
+        Deux rangées. En haut les panneaux de travail, côte à côte et de
+        hauteur bornée : choisir un critère ou trancher des propositions ne
+        demande pas la moitié de l'écran. En bas les favoris, qui prennent tout
+        le reste — c'est là qu'on passe son temps.
+      */}
+      <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-3 p-3">
         {bookmarkCount > 0 && (
-          <MacWindow title="Ranger avec l’IA" className="shrink-0">
-            <ClassifyPanel
-              hasConsent={account?.aiConsentAt != null}
-              unclassifiedCount={unclassifiedCount}
-              pendingCount={pendingCount}
-            />
-          </MacWindow>
-        )}
+          <div className="grid gap-3 lg:grid-cols-2">
+            <MacWindow title="Ranger avec l’IA" className="max-h-[320px]">
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <ClassifyPanel
+                  hasConsent={account?.aiConsentAt != null}
+                  unclassifiedCount={unclassifiedCount}
+                  pendingCount={pendingCount}
+                />
+              </div>
+            </MacWindow>
 
-        {pendingCount > 0 && (
-          <MacWindow
-            title="Propositions de rangement"
-            className="max-h-[420px] min-h-0 shrink-0"
-          >
-            <SuggestionList
-              suggestions={suggestions}
-              totalPending={pendingCount}
-            />
-          </MacWindow>
+            <MacWindow
+              title="Propositions de rangement"
+              className="max-h-[320px]"
+            >
+              {pendingCount === 0 ? (
+                <p className="text-[12px] text-muted-foreground">
+                  Aucune proposition en attente. Lancez un rangement dans le
+                  panneau de gauche.
+                </p>
+              ) : (
+                <SuggestionList
+                  suggestions={suggestions}
+                  totalPending={pendingCount}
+                />
+              )}
+            </MacWindow>
+          </div>
         )}
 
         <MacWindow
           title="Mes favoris"
           status={`${bookmarkCount} favori${bookmarkCount > 1 ? 's' : ''}, ${folderCount} dossier${folderCount > 1 ? 's' : ''}`}
-          className="min-h-[280px] flex-1"
+          className="min-h-0"
         >
           {bookmarkCount === 0 ? (
             <p className="rounded-[6px] border border-dashed border-[#b3bac6] bg-[#f7f9fc] p-4 text-[12px] text-muted-foreground">
-              Aucun favori pour le moment. Déposez un export de navigateur dans
-              la fenêtre du dessus.
+              Aucun favori pour le moment. Ouvrez le menu Fichier puis
+              « Importer des favoris » pour déposer un export de navigateur.
             </p>
           ) : (
-            <>
-              <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
-                <details className="text-[12px]">
-                  <summary className="cursor-default text-muted-foreground">
-                    Importer d&apos;autres fichiers
-                  </summary>
-                  <div className="mt-3 w-full max-w-[420px]">
-                    <ImportForm />
-                  </div>
-                </details>
-                <ExportButton
-                  bookmarkCount={bookmarkCount}
-                  folderCount={folderCount}
-                />
-              </div>
-              <BookmarkBrowser nodes={nodes} />
-            </>
+            <BookmarkBrowser nodes={nodes} />
           )}
         </MacWindow>
-
-        <div className="flex shrink-0 justify-end pb-2">
-          <DeleteAccountButton />
-        </div>
       </div>
-    </div>
+    </DashboardShell>
   )
 }
