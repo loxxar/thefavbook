@@ -33,7 +33,9 @@ export function MacWindow({
         <div className="w-[54px]" />
       </header>
 
-      <div className="bg-white p-5">{children}</div>
+      {/* min-h-0 : sans lui, un enfant défilant refuse de rétrécir sous sa
+          hauteur intrinsèque et déborde de la fenêtre. */}
+      <div className="flex min-h-0 flex-1 flex-col bg-white p-5">{children}</div>
 
       {status !== undefined && (
         <div className="aqua-statusbar flex h-[22px] shrink-0 items-center px-3 text-[11px] text-[#555]">

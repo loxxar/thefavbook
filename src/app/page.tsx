@@ -23,21 +23,25 @@ export default async function HomePage() {
   const bookmarkCount = countBookmarks(nodes)
 
   return (
-    <div className="aqua-desktop flex min-h-full flex-1 flex-col">
+    <div className="aqua-desktop flex h-dvh flex-col">
       <MenuBar>
         <span className="hidden text-[12px] sm:inline">{user.email}</span>
         <SignOutButton />
       </MenuBar>
 
-      <div className="flex flex-1 flex-col items-center gap-6 p-4 sm:p-10">
-        <MacWindow title="Importer" className="w-full max-w-[560px]">
+      {/*
+        La fenêtre de travail occupe toute la hauteur restante : c'est là qu'on
+        passe son temps. L'import garde une taille fixe, il ne sert qu'au début.
+      */}
+      <div className="mx-auto flex w-full max-w-[1180px] min-h-0 flex-1 flex-col gap-5 p-4 sm:p-6">
+        <MacWindow title="Importer" className="shrink-0">
           <ImportForm />
         </MacWindow>
 
         <MacWindow
           title="Mes favoris"
           status={`${bookmarkCount} favori${bookmarkCount > 1 ? 's' : ''}, ${folderCount} dossier${folderCount > 1 ? 's' : ''}`}
-          className="h-fit w-full max-w-[560px]"
+          className="min-h-0 flex-1"
         >
           {bookmarkCount === 0 ? (
             <p className="rounded-[6px] border border-dashed border-[#b3bac6] bg-[#f7f9fc] p-4 text-[12px] text-muted-foreground">
@@ -46,14 +50,14 @@ export default async function HomePage() {
             </p>
           ) : (
             <>
-              <div className="mb-4 flex justify-end">
+              <div className="mb-3 flex shrink-0 justify-end">
                 <Button variant="outline" size="sm" asChild>
                   <a href="/api/export" download>
                     Exporter en HTML
                   </a>
                 </Button>
               </div>
-              <div className="max-h-[420px] overflow-y-auto rounded-[6px] border border-[#d2d9e6] p-2">
+              <div className="min-h-0 flex-1 overflow-y-auto rounded-[6px] border border-[#d2d9e6] p-2">
                 <BookmarkTree nodes={nodes} />
               </div>
             </>
