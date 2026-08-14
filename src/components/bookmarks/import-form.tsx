@@ -51,6 +51,22 @@ export function ImportForm() {
         {isPending ? 'Import en cours…' : 'Importer'}
       </Button>
 
+      {isPending && (
+        <div className="space-y-1.5">
+          <div
+            className="aqua-progress"
+            role="progressbar"
+            aria-label="Import en cours"
+          >
+            <div className="aqua-progress-bar" />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Lecture du fichier, analyse et écriture en base. Sur plusieurs
+            milliers de favoris, comptez une poignée de secondes.
+          </p>
+        </div>
+      )}
+
       {state.status !== 'idle' && (
         <div
           role="status"
