@@ -37,6 +37,7 @@ export async function classifyNextBatchAction(
       message: "Le classement automatique n'a pas été autorisé.",
       classified: 0,
       remaining: 0,
+      samples: [],
     }
   }
 
@@ -53,6 +54,7 @@ export async function classifyNextBatchAction(
       message: 'Tous les favoris ont été analysés.',
       classified: 0,
       remaining: 0,
+      samples: [],
     }
   }
 
@@ -108,11 +110,19 @@ export async function classifyNextBatchAction(
 
     revalidatePath('/')
 
+    // Le titre d'origine sert de repli : le modèle ne réécrit que ceux qui
+    // sont inexploitables.
+    const originalTitles = new Map(pending.map((b) => [b.id, b.title]))
+
     return {
       status: remaining === 0 ? 'done' : 'running',
       message: '',
       classified: assignments.length,
       remaining,
+      samples: assignments.map((a) => ({
+        title: a.title ?? originalTitles.get(a.id) ?? '(sans titre)',
+        folderPath: a.folderPath,
+      })),
     }
   } catch (error) {
     const remaining = await prisma.bookmark.count({
@@ -122,7 +132,13 @@ export async function classifyNextBatchAction(
     // Un quota n'est pas une panne : les favoris déjà classés sont acquis et
     // l'appel réussira plus tard. Le client peut donc patienter et reprendre.
     if (error instanceof AiQuotaError) {
-      return { status: 'quota', message: error.message, classified: 0, remaining }
+      return {
+        status: 'quota',
+        message: error.message,
+        classified: 0,
+        remaining,
+        samples: [],
+      }
     }
 
     return {
@@ -133,6 +149,7 @@ export async function classifyNextBatchAction(
           : "Le service de classement n'a pas répondu.",
       classified: 0,
       remaining,
+      samples: [],
     }
   }
 }

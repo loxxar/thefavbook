@@ -7,9 +7,12 @@ import {
   classifyNextBatchAction,
   clearPendingSuggestionsAction,
 } from '@/lib/ai/actions'
+import { ClassifyMonitor } from '@/components/ai/classify-monitor'
 import {
   DELAY_BETWEEN_BATCHES_MS,
+  LOG_LENGTH,
   QUOTA_COOLDOWN_MS,
+  type ClassifiedSample,
 } from '@/lib/ai/state'
 import { CLASSIFICATION_STYLES, DEFAULT_STYLE_ID } from '@/lib/ai/styles'
 import { setAiConsentAction } from '@/lib/auth/account-actions'
@@ -36,6 +39,12 @@ export function ClassifyPanel({
   const [isRunning, setIsRunning] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [styleId, setStyleId] = useState(DEFAULT_STYLE_ID)
+  const [log, setLog] = useState<ClassifiedSample[]>([])
+  const [folderCounts, setFolderCounts] = useState<Map<string, number>>(
+    new Map(),
+  )
+  const [batchNumber, setBatchNumber] = useState(0)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const stopRef = useRef(false)
   // Un groupe de radios porte sur tout le document : sans nom propre, deux
   // panneaux affichés ensemble se voleraient la sélection.
@@ -43,7 +52,16 @@ export function ClassifyPanel({
 
   const total = unclassifiedCount
   const done = remaining === null ? 0 : total - remaining
-  const percent = total === 0 ? 100 : Math.round((done / total) * 100)
+  const batchTotal = Math.ceil(total / 100)
+
+  // Estimation fondée sur le rythme constaté, pas sur une constante : le temps
+  // de réponse du modèle varie plus que la cadence qu'on impose.
+  const remainingSeconds =
+    done === 0 ? 0 : (elapsedSeconds / done) * (total - done)
+
+  const folderTally = [...folderCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 40)
 
   // L'ordre de grandeur mérite d'être annoncé avant de lancer, pas découvert
   // en attendant.
@@ -68,6 +86,16 @@ export function ClassifyPanel({
   async function runClassification() {
     setIsRunning(true)
     stopRef.current = false
+    setLog([])
+    setFolderCounts(new Map())
+    setBatchNumber(0)
+    setElapsedSeconds(0)
+
+    const startedAt = Date.now()
+    const ticker = setInterval(
+      () => setElapsedSeconds((Date.now() - startedAt) / 1000),
+      1000,
+    )
     let quotaRetried = false
 
     for (;;) {
@@ -81,6 +109,21 @@ export function ClassifyPanel({
       }
 
       setRemaining(result.remaining)
+
+      if (result.samples.length > 0) {
+        setBatchNumber((n) => n + 1)
+        // Le plus récent en tête : c'est ce qu'on regarde.
+        setLog((previous) =>
+          [...result.samples.slice().reverse(), ...previous].slice(0, LOG_LENGTH),
+        )
+        setFolderCounts((previous) => {
+          const next = new Map(previous)
+          for (const sample of result.samples) {
+            next.set(sample.folderPath, (next.get(sample.folderPath) ?? 0) + 1)
+          }
+          return next
+        })
+      }
 
       if (result.status === 'done') {
         toast.success('Analyse terminée.')
@@ -106,6 +149,7 @@ export function ClassifyPanel({
       await wait(DELAY_BETWEEN_BATCHES_MS)
     }
 
+    clearInterval(ticker)
     setNotice(null)
     setIsRunning(false)
   }
@@ -218,23 +262,18 @@ export function ClassifyPanel({
       )}
 
       {isRunning ? (
-        <div className="space-y-1.5">
-          <div
-            className="aqua-progress"
-            role="progressbar"
-            aria-valuenow={percent}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label="Analyse en cours"
-          >
-            <div
-              className="h-full bg-[linear-gradient(to_bottom,#8fc0ff,#4a8ae8_50%,#2f6fd8)] transition-[width] duration-300"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-          <p className="text-[11px] text-muted-foreground">
-            {notice ?? `${done} sur ${total} analysés.`}
-          </p>
+        <div className="space-y-2">
+          <ClassifyMonitor
+            done={done}
+            total={total}
+            batchNumber={batchNumber}
+            batchTotal={batchTotal}
+            elapsedSeconds={elapsedSeconds}
+            remainingSeconds={remainingSeconds}
+            notice={notice}
+            log={log}
+            folderTally={folderTally}
+          />
           <Button
             type="button"
             variant="outline"
