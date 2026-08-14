@@ -1,52 +1,61 @@
-import { ClassifyPanel } from '@/components/ai/classify-panel'
+import { ClassifyPanel } from "@/components/ai/classify-panel";
 import {
   SuggestionList,
   type SuggestionRow,
-} from '@/components/ai/suggestion-list'
-import { BookmarkBrowser } from '@/components/bookmarks/bookmark-browser'
-import { DashboardShell } from '@/components/dashboard/dashboard-shell'
-import { MacWindow } from '@/components/mac/mac-window'
-import { requireUser } from '@/lib/auth/session'
-import { readBookmarkTree } from '@/lib/bookmarks/tree'
-import { countBookmarks } from '@/lib/bookmarks/types'
-import { getPrisma } from '@/lib/db'
+} from "@/components/ai/suggestion-list";
+import { BookmarkBrowser } from "@/components/bookmarks/bookmark-browser";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { MacWindow } from "@/components/mac/mac-window";
+import { requireUser } from "@/lib/auth/session";
+import { readBookmarkTree } from "@/lib/bookmarks/tree";
+import { countBookmarks } from "@/lib/bookmarks/types";
+import { getPrisma } from "@/lib/db";
+import { countSupporters } from "@/lib/support/count";
 
 /** Au-delà, la liste de triage devient illisible : on pagine par le triage. */
-const TRIAGE_PAGE_SIZE = 50
+const TRIAGE_PAGE_SIZE = 50;
 
 export default async function HomePage() {
-  const user = await requireUser()
-  const prisma = getPrisma()
+  const user = await requireUser();
+  const prisma = getPrisma();
 
   // Chaque requête filtre sur userId — c'est la seule barrière, voir
   // CONVENTIONS.md.
-  const [nodes, folderCount, account, unclassifiedCount, pendingCount, pending] =
-    await Promise.all([
-      readBookmarkTree(prisma, user.id),
-      prisma.folder.count({ where: { userId: user.id } }),
-      prisma.user.findUnique({
-        where: { id: user.id },
-        select: { aiConsentAt: true },
-      }),
-      prisma.bookmark.count({
-        where: { userId: user.id, suggestion: { is: null } },
-      }),
-      prisma.suggestion.count({ where: { userId: user.id, status: 'PENDING' } }),
-      prisma.suggestion.findMany({
-        where: { userId: user.id, status: 'PENDING' },
-        take: TRIAGE_PAGE_SIZE,
-        orderBy: { createdAt: 'asc' },
-        select: {
-          id: true,
-          folderPath: true,
-          reason: true,
-          title: true,
-          bookmark: { select: { title: true, url: true } },
-        },
-      }),
-    ])
+  const [
+    nodes,
+    folderCount,
+    account,
+    unclassifiedCount,
+    pendingCount,
+    pending,
+    supporterCount,
+  ] = await Promise.all([
+    readBookmarkTree(prisma, user.id),
+    prisma.folder.count({ where: { userId: user.id } }),
+    prisma.user.findUnique({
+      where: { id: user.id },
+      select: { aiConsentAt: true },
+    }),
+    prisma.bookmark.count({
+      where: { userId: user.id, suggestion: { is: null } },
+    }),
+    prisma.suggestion.count({ where: { userId: user.id, status: "PENDING" } }),
+    prisma.suggestion.findMany({
+      where: { userId: user.id, status: "PENDING" },
+      take: TRIAGE_PAGE_SIZE,
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        folderPath: true,
+        reason: true,
+        title: true,
+        bookmark: { select: { title: true, url: true } },
+      },
+    }),
+    countSupporters(),
+  ]);
 
-  const bookmarkCount = countBookmarks(nodes)
+  const bookmarkCount = countBookmarks(nodes);
 
   const suggestions: SuggestionRow[] = pending.map((s) => ({
     id: s.id,
@@ -55,13 +64,14 @@ export default async function HomePage() {
     newTitle: s.title,
     bookmarkTitle: s.bookmark.title,
     bookmarkUrl: s.bookmark.url,
-  }))
+  }));
 
   return (
     <DashboardShell
       email={user.email}
       bookmarkCount={bookmarkCount}
       folderCount={folderCount}
+      supporterCount={supporterCount}
     >
       {/*
         Deux rangées. En haut les panneaux de travail, côte à côte et de
@@ -103,13 +113,13 @@ export default async function HomePage() {
 
         <MacWindow
           title="Mes favoris"
-          status={`${bookmarkCount} favori${bookmarkCount > 1 ? 's' : ''}, ${folderCount} dossier${folderCount > 1 ? 's' : ''}`}
+          status={`${bookmarkCount} favori${bookmarkCount > 1 ? "s" : ""}, ${folderCount} dossier${folderCount > 1 ? "s" : ""}`}
           className="min-h-0"
         >
           {bookmarkCount === 0 ? (
             <p className="rounded-[6px] border border-dashed border-[#b3bac6] bg-[#f7f9fc] p-4 text-[12px] text-muted-foreground">
-              Aucun favori pour le moment. Ouvrez le menu Fichier puis
-              « Importer des favoris » pour déposer un export de navigateur.
+              Aucun favori pour le moment. Ouvrez le menu Fichier puis «
+              Importer des favoris » pour déposer un export de navigateur.
             </p>
           ) : (
             <BookmarkBrowser nodes={nodes} />
@@ -117,5 +127,5 @@ export default async function HomePage() {
         </MacWindow>
       </div>
     </DashboardShell>
-  )
+  );
 }

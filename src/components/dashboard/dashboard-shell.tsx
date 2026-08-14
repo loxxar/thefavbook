@@ -16,6 +16,7 @@ interface DashboardShellProps {
   email: string
   bookmarkCount: number
   folderCount: number
+  supporterCount: number
   children: ReactNode
 }
 
@@ -30,6 +31,7 @@ export function DashboardShell({
   email,
   bookmarkCount,
   folderCount,
+  supporterCount,
   children,
 }: DashboardShellProps) {
   const router = useRouter()
@@ -158,6 +160,7 @@ export function DashboardShell({
         <TipDialog
           bookmarkCount={bookmarkCount}
           folderCount={folderCount}
+          supporterCount={supporterCount}
           onClose={() => setIsTipping(false)}
         />
       )}

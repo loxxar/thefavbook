@@ -248,3 +248,31 @@ enum SuggestionStatus {
   ACCEPTED
   REJECTED
 }
+
+/// Un soutien reçu via Ko-fi.
+///
+/// POURQUOI aucun e-mail : Ko-fi en transmet un, on ne le garde pas. Stocker
+/// l'adresse d'un donateur ajouterait un engagement à la page de
+/// confidentialité pour un compteur qui n'en a pas besoin.
+///
+/// Le prénom n'est conservé que si le donateur a coché « public » chez Ko-fi.
+model Support {
+  id String @id @default(cuid())
+
+  /// Identifiant Ko-fi de la transaction. Unique : le webhook peut être rejoué.
+  kofiTransactionId String @unique
+
+  /// « Donation », « Subscription » ou « Shop Order ».
+  type     String
+  amount   Decimal @db.Decimal(10, 2)
+  currency String
+
+  /// Prénom affiché, seulement si le don est public.
+  fromName String?
+  /// Message laissé, seulement s'il est public.
+  message  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
