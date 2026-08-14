@@ -8,10 +8,10 @@ import {
 import { DeleteAccountButton } from '@/components/auth/delete-account-button'
 import { SignOutButton } from '@/components/auth/sign-out-button'
 import { BookmarkBrowser } from '@/components/bookmarks/bookmark-browser'
+import { ExportButton } from '@/components/bookmarks/export-button'
 import { ImportForm } from '@/components/bookmarks/import-form'
 import { MacWindow } from '@/components/mac/mac-window'
 import { MenuBar } from '@/components/mac/menu-bar'
-import { Button } from '@/components/ui/button'
 import { requireUser } from '@/lib/auth/session'
 import { readBookmarkTree } from '@/lib/bookmarks/tree'
 import { countBookmarks } from '@/lib/bookmarks/types'
@@ -126,11 +126,10 @@ export default async function HomePage() {
                     <ImportForm />
                   </div>
                 </details>
-                <Button variant="outline" size="sm" asChild>
-                  <a href="/api/export" download>
-                    Exporter en HTML
-                  </a>
-                </Button>
+                <ExportButton
+                  bookmarkCount={bookmarkCount}
+                  folderCount={folderCount}
+                />
               </div>
               <BookmarkBrowser nodes={nodes} />
             </>
