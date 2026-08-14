@@ -3,12 +3,12 @@ import { getSessionUser } from '@/lib/auth/session'
 /**
  * Diagnostic du classement automatique.
  *
- * Interroge Google avec la clé du serveur pour savoir quels modèles elle
- * autorise réellement, puis tente un appel minimal. Évite d'avoir à manipuler
- * la clé à la main pour comprendre un refus.
+ * Tente un appel minimal avec la clé du serveur et renvoie la réponse brute du
+ * fournisseur. Évite d'avoir à manipuler la clé à la main pour comprendre un
+ * refus — crédit épuisé, modèle inconnu, débit dépassé.
  *
- * Réservé aux comptes connectés : la liste des modèles n'a rien de secret,
- * mais l'existence et la validité de la clé, si.
+ * Réservé aux comptes connectés : le résultat n'a rien de secret, mais
+ * l'existence et la validité de la clé, si.
  */
 export async function GET(): Promise<Response> {
   const user = await getSessionUser()
@@ -17,73 +17,54 @@ export async function GET(): Promise<Response> {
     return new Response('Non autorisé.', { status: 401 })
   }
 
-  const key = process.env.GEMINI_API_KEY
+  const key = process.env.OPENROUTER_API_KEY
 
   if (key === undefined || key === '') {
     return Response.json(
-      { erreur: 'GEMINI_API_KEY absente côté serveur.' },
+      { erreur: 'OPENROUTER_API_KEY absente côté serveur.' },
       { status: 500 },
     )
   }
 
-  const configured = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash'
-  const base = 'https://generativelanguage.googleapis.com/v1beta'
+  const model = process.env.OPENROUTER_MODEL ?? 'google/gemini-2.5-flash-lite'
 
-  const listResponse = await fetch(`${base}/models?key=${key}&pageSize=200`)
-  const listPayload: unknown = await listResponse.json()
-
-  const models = extractModels(listPayload)
-
-  // Un appel minimal sur le modèle configuré : la liste peut annoncer un
-  // modèle que le compte n'a pas le droit d'appeler.
-  const testResponse = await fetch(
-    `${base}/models/${configured}:generateContent?key=${key}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }] }),
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+      'X-Title': 'thefavbook',
     },
-  )
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: 'Réponds exactement : ok' }],
+      max_tokens: 5,
+      provider: { data_collection: 'deny', require_parameters: true },
+    }),
+  })
 
-  const testPayload: unknown = await testResponse.json()
+  const payload: unknown = await response.json()
 
   return Response.json(
     {
-      modeleConfigure: configured,
-      listeStatut: listResponse.status,
-      modelesDisponibles: models,
-      appelTestStatut: testResponse.status,
-      appelTestReponse: extractError(testPayload) ?? 'ok',
+      modeleConfigure: model,
+      statut: response.status,
+      reponse: resume(payload),
     },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }
 
-/** Ne garde que les modèles capables de répondre à `generateContent`. */
-function extractModels(payload: unknown): string[] {
-  if (typeof payload !== 'object' || payload === null) return []
-
-  const list = (payload as { models?: unknown }).models
-
-  if (!Array.isArray(list)) return []
-
-  return list
-    .filter((m): m is { name: string; supportedGenerationMethods?: string[] } => {
-      if (typeof m !== 'object' || m === null) return false
-      const methods = (m as { supportedGenerationMethods?: unknown })
-        .supportedGenerationMethods
-      return (
-        typeof (m as { name?: unknown }).name === 'string' &&
-        (!Array.isArray(methods) || methods.includes('generateContent'))
-      )
-    })
-    .map((m) => m.name.replace('models/', ''))
-}
-
-function extractError(payload: unknown): string | null {
-  if (typeof payload !== 'object' || payload === null) return null
+function resume(payload: unknown): string {
+  if (typeof payload !== 'object' || payload === null) return 'réponse illisible'
 
   const error = (payload as { error?: { message?: unknown } }).error
 
-  return typeof error?.message === 'string' ? error.message : null
+  if (typeof error?.message === 'string') return error.message
+
+  const content = (
+    payload as { choices?: { message?: { content?: unknown } }[] }
+  ).choices?.[0]?.message?.content
+
+  return typeof content === 'string' ? `ok — « ${content} »` : 'réponse vide'
 }

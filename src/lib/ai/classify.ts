@@ -1,4 +1,4 @@
-import { generateJson, type JsonSchema } from '@/lib/ai/gemini'
+import { generateJson, type JsonSchema } from '@/lib/ai/openrouter'
 
 /**
  * Classement d'un lot de favoris.
@@ -46,11 +46,15 @@ const responseSchema: JsonSchema = {
           },
           reason: { type: 'string', description: 'Justification en une ligne' },
         },
-        required: ['id', 'folderPath', 'reason'],
+        // Le mode strict exige que tout champ déclaré soit requis : d'où la
+        // consigne de renvoyer une chaîne vide plutôt que d'omettre `title`.
+        required: ['id', 'folderPath', 'title', 'reason'],
+        additionalProperties: false,
       },
     },
   },
   required: ['assignments'],
+  additionalProperties: false,
 }
 
 function buildPrompt(
@@ -99,7 +103,7 @@ export async function classifyBookmarks(
       title?: string
       reason: string
     }[]
-  }>(buildPrompt(bookmarks, knownFolders), responseSchema)
+  }>(buildPrompt(bookmarks, knownFolders), 'rangement_favoris', responseSchema)
 
   const wanted = new Set(bookmarks.map((b) => b.id))
 

@@ -104,9 +104,10 @@ export function ClassifyPanel({
       <div className="space-y-3 text-[12px]">
         <p>
           Pour proposer un rangement, l&apos;outil envoie{' '}
-          <strong>le titre et l&apos;adresse</strong> de vos favoris au service
-          Gemini de Google. Jamais le contenu des pages, jamais votre adresse
-          e-mail.
+          <strong>le titre et l&apos;adresse</strong> de vos favoris à
+          OpenRouter, qui les confie au modèle Gemini Flash-Lite de Google.
+          Jamais le contenu des pages, jamais votre adresse e-mail. Les
+          fournisseurs qui s&apos;entraînent sur les requêtes sont exclus.
         </p>
         <p className="text-muted-foreground">
           Rien ne part tant que vous n&apos;avez pas accepté, et l&apos;outil
@@ -172,9 +173,9 @@ export function ClassifyPanel({
           </Button>
           <p className="text-[11px] text-muted-foreground">
             Environ {estimatedMinutes} minute
-            {estimatedMinutes > 1 ? 's' : ''} : le service gratuit limite à quinze
-            requêtes par minute, l&apos;analyse avance par lots de cent. Vous
-            pouvez l&apos;interrompre, ce qui est déjà analysé est conservé.
+            {estimatedMinutes > 1 ? 's' : ''} : l&apos;analyse avance par lots
+            de cent, espacés pour ménager le fournisseur. Vous pouvez
+            l&apos;interrompre, ce qui est déjà analysé est conservé.
           </p>
         </>
       )}

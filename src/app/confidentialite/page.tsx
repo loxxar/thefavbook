@@ -71,9 +71,13 @@ export default function ConfidentialitePage() {
             <Entry question="Mes favoris partent-ils chez un tiers ?">
               Seulement si vous activez le classement automatique, et seulement
               après un consentement explicite de votre part. Dans ce cas, les{' '}
-              <strong>titres et URL</strong> — jamais le contenu des pages —
-              sont envoyés au service Gemini de Google pour proposer un
-              rangement. Sans cette activation, rien ne sort de la base.
+              <strong>titres et adresses</strong> — jamais le contenu des pages
+              — transitent par OpenRouter, qui les confie au modèle{' '}
+              <code>gemini-2.5-flash-lite</code> de Google. Chaque requête porte
+              la consigne <code>data_collection: deny</code> : les fournisseurs
+              qui s&apos;autorisent l&apos;entraînement sur les requêtes sont
+              écartés du routage. Sans cette activation, rien ne sort de la
+              base.
             </Entry>
 
             <Entry question="Suivez-vous ma navigation ?">

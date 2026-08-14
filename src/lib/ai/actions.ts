@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 
 import { requireUser } from '@/lib/auth/session'
 import { CLASSIFY_BATCH_SIZE, classifyBookmarks } from '@/lib/ai/classify'
-import { GeminiError, GeminiQuotaError } from '@/lib/ai/gemini'
+import { AiError, AiQuotaError } from '@/lib/ai/openrouter'
 import type { ClassifyBatchResult } from '@/lib/ai/state'
 import { getPrisma } from '@/lib/db'
 
@@ -112,14 +112,14 @@ export async function classifyNextBatchAction(): Promise<ClassifyBatchResult> {
 
     // Un quota n'est pas une panne : les favoris déjà classés sont acquis et
     // l'appel réussira plus tard. Le client peut donc patienter et reprendre.
-    if (error instanceof GeminiQuotaError) {
+    if (error instanceof AiQuotaError) {
       return { status: 'quota', message: error.message, classified: 0, remaining }
     }
 
     return {
       status: 'error',
       message:
-        error instanceof GeminiError
+        error instanceof AiError
           ? error.message
           : "Le service de classement n'a pas répondu.",
       classified: 0,
