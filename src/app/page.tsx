@@ -79,9 +79,15 @@ export default async function HomePage() {
         demande pas la moitié de l'écran. En bas les favoris, qui prennent tout
         le reste — c'est là qu'on passe son temps.
       */}
-      <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-3 p-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+        {/*
+          shrink-0 : une piste de grille `auto` se laisse comprimer quand la
+          hauteur manque, ce qui repoussait le bouton de lancement sous un
+          défilement. En flex, cette rangée garde sa hauteur naturelle et c'est
+          la fenêtre des favoris qui cède.
+        */}
         {bookmarkCount > 0 && (
-          <div className="grid gap-3 lg:grid-cols-2">
+          <div className="grid shrink-0 gap-3 lg:grid-cols-2">
             {/*
               Pas de plafond de hauteur ici : les cinq critères et le bouton
               de lancement doivent tenir sans défilement. Un panneau où
@@ -89,13 +95,11 @@ export default async function HomePage() {
               comme une commande.
             */}
             <MacWindow title="Ranger avec l’IA">
-              <div className="min-h-0 flex-1">
-                <ClassifyPanel
-                  hasConsent={account?.aiConsentAt != null}
-                  unclassifiedCount={unclassifiedCount}
-                  pendingCount={pendingCount}
-                />
-              </div>
+              <ClassifyPanel
+                hasConsent={account?.aiConsentAt != null}
+                unclassifiedCount={unclassifiedCount}
+                pendingCount={pendingCount}
+              />
             </MacWindow>
 
             {/*
@@ -125,7 +129,7 @@ export default async function HomePage() {
         <MacWindow
           title="Mes favoris"
           status={`${bookmarkCount} favori${bookmarkCount > 1 ? 's' : ''}, ${folderCount} dossier${folderCount > 1 ? 's' : ''}`}
-          className="min-h-0"
+          className="min-h-[320px] flex-1"
         >
           {bookmarkCount === 0 ? (
             <p className="rounded-[6px] border border-dashed border-[#b3bac6] bg-[#f7f9fc] p-4 text-[12px] text-muted-foreground">
