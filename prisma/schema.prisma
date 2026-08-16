@@ -208,6 +208,13 @@ model Bookmark {
   addDate      DateTime?
   lastModified DateTime?
 
+  /// Dernière vérification du lien. Null : jamais testé.
+  checkedAt   DateTime?
+  /// Code HTTP obtenu. 0 quand le serveur n'a pas répondu du tout.
+  checkStatus Int?
+  /// Adresse finale après redirections, quand elle diffère de l'originale.
+  redirectsTo String?   @db.Text
+
   importBatchId String?
   importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
 
@@ -219,6 +226,7 @@ model Bookmark {
 
   @@index([userId, spaceId, folderId, position])
   @@index([userId, hostname])
+  @@index([userId, spaceId, checkedAt])
 }
 
 model Tag {

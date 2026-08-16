@@ -163,8 +163,8 @@ export function DashboardShell({
       label: 'Outils',
       items: [
         {
-          label: 'Doublons…',
-          href: `/doublons?espace=${encodeURIComponent(currentSpaceId)}`,
+          label: 'Entretien : doublons et liens morts…',
+          href: `/entretien?espace=${encodeURIComponent(currentSpaceId)}`,
         },
       ],
     },

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { DuplicateList } from '@/components/bookmarks/duplicate-list'
+import { LinkCheckPanel } from '@/components/bookmarks/link-check-panel'
 import { MacWindow } from '@/components/mac/mac-window'
 import { requireUser } from '@/lib/auth/session'
 import { findDuplicateGroups } from '@/lib/bookmarks/duplicates'
@@ -9,7 +10,7 @@ import { getPrisma } from '@/lib/db'
 import { resolveSpaceId } from '@/lib/spaces/current'
 
 export const metadata: Metadata = {
-  title: 'Doublons — thefavbook',
+  title: 'Entretien — thefavbook',
 }
 
 /**
@@ -17,9 +18,9 @@ export const metadata: Metadata = {
  * collection réelle, les groupes se comptent par milliers. Les glisser dans un
  * panneau déjà chargé rendrait les deux illisibles.
  */
-export default async function DoublonsPage({
+export default async function EntretienPage({
   searchParams,
-}: PageProps<'/doublons'>) {
+}: PageProps<'/entretien'>) {
   const user = await requireUser()
   const prisma = getPrisma()
 
@@ -30,15 +31,25 @@ export default async function DoublonsPage({
     typeof requested === 'string' ? requested : undefined,
   )
 
-  const { groups, totalGroups } = await findDuplicateGroups(
-    prisma,
-    user.id,
-    spaceId,
-  )
+  const [{ groups, totalGroups }, totalCount, uncheckedCount, brokenCount] =
+    await Promise.all([
+      findDuplicateGroups(prisma, user.id, spaceId),
+      prisma.bookmark.count({ where: { userId: user.id, spaceId } }),
+      prisma.bookmark.count({
+        where: { userId: user.id, spaceId, checkedAt: null },
+      }),
+      prisma.bookmark.count({
+        where: {
+          userId: user.id,
+          spaceId,
+          OR: [{ checkStatus: 0 }, { checkStatus: { gte: 400 } }],
+        },
+      }),
+    ])
 
   return (
-    <div className="aqua-desktop flex h-dvh flex-col p-3">
-      <MacWindow title="Doublons" className="min-h-0 flex-1">
+    <div className="aqua-desktop flex h-dvh flex-col gap-3 p-3">
+      <MacWindow title="Vérification des liens" className="shrink-0">
         <div className="mb-3 shrink-0 text-[12px]">
           <Link
             href={`/?espace=${encodeURIComponent(spaceId)}`}
@@ -48,6 +59,15 @@ export default async function DoublonsPage({
           </Link>
         </div>
 
+        <LinkCheckPanel
+          spaceId={spaceId}
+          totalCount={totalCount}
+          uncheckedCount={uncheckedCount}
+          brokenCount={brokenCount}
+        />
+      </MacWindow>
+
+      <MacWindow title="Doublons" className="min-h-0 flex-1">
         <p className="mb-3 shrink-0 text-[11px] text-muted-foreground">
           Deux adresses sont considérées identiques quand elles ne diffèrent que
           par le protocole, le <code>www</code>, un slash final ou des
