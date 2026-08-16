@@ -82,8 +82,14 @@ export default async function HomePage() {
       <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-3 p-3">
         {bookmarkCount > 0 && (
           <div className="grid gap-3 lg:grid-cols-2">
-            <MacWindow title="Ranger avec l’IA" className="max-h-[320px]">
-              <div className="min-h-0 flex-1 overflow-y-auto">
+            {/*
+              Pas de plafond de hauteur ici : les cinq critères et le bouton
+              de lancement doivent tenir sans défilement. Un panneau où
+              l'action principale est sous le pli se lit comme une liste, pas
+              comme une commande.
+            */}
+            <MacWindow title="Ranger avec l’IA">
+              <div className="min-h-0 flex-1">
                 <ClassifyPanel
                   hasConsent={account?.aiConsentAt != null}
                   unclassifiedCount={unclassifiedCount}
@@ -92,9 +98,14 @@ export default async function HomePage() {
               </div>
             </MacWindow>
 
+            {/*
+              Plafond ici, pas sur le panneau de gauche : une longue liste de
+              propositions étirerait sinon toute la rangée et réduirait la
+              fenêtre des favoris à une bande.
+            */}
             <MacWindow
               title="Propositions de rangement"
-              className="max-h-[320px]"
+              className="max-h-[420px]"
             >
               {pendingCount === 0 ? (
                 <p className="text-[12px] text-muted-foreground">
