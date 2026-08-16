@@ -10,6 +10,7 @@ import { MenuBar, ProductMark, type Menu } from '@/components/mac/menu-bar'
 import { MacWindow } from '@/components/mac/mac-window'
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth/client'
+import { createFolderAction } from '@/lib/bookmarks/folder-actions'
 import { deleteAccountAction } from '@/lib/auth/account-actions'
 
 interface DashboardShellProps {
@@ -83,6 +84,24 @@ export function DashboardShell({
           label: 'Exporter en HTML',
           onSelect: exportBookmarks,
           disabled: !hasBookmarks,
+        },
+        {
+          label: 'Nouveau dossier à la racine…',
+          separatorBefore: true,
+          onSelect: async () => {
+            const name = prompt('Nom du dossier')
+
+            if (name === null || name.trim() === '') return
+
+            const result = await createFolderAction(name, null)
+
+            if (result.ok) {
+              router.refresh()
+              toast.success('Dossier créé.')
+            } else {
+              toast.error(result.message)
+            }
+          },
         },
       ],
     },

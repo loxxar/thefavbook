@@ -1,6 +1,8 @@
 'use client'
 
-import { useDraggable, useDroppable } from '@dnd-kit/core'
+import { useDraggable } from '@dnd-kit/core'
+
+import { FolderRow } from '@/components/bookmarks/folder-row'
 
 import {
   isFolder,
@@ -49,42 +51,6 @@ export function BookmarkTree({
         </li>
       ))}
     </ul>
-  )
-}
-
-interface FolderRowProps {
-  node: ParsedNode & { kind: 'folder' }
-  open: boolean
-  children: React.ReactNode
-}
-
-function FolderRow({ node, open, children }: FolderRowProps) {
-  // Un dossier sans identifiant vient d'un fichier non encore importé : il ne
-  // peut accueillir aucun déplacement.
-  const { setNodeRef, isOver } = useDroppable({
-    id: node.id ?? `sans-id-${node.title}`,
-    disabled: node.id === undefined,
-  })
-
-  return (
-    <details open={open}>
-      <summary
-        ref={setNodeRef}
-        className={`cursor-default rounded-[4px] px-1 py-0.5 marker:text-[#6b7280] ${
-          isOver
-            ? 'bg-[linear-gradient(to_bottom,var(--accent-top),var(--accent-bottom))] text-white'
-            : 'hover:bg-[#e6ebf4]'
-        }`}
-      >
-        <span className="font-semibold">{node.title}</span>
-        <span
-          className={`ml-1.5 text-[11px] ${isOver ? 'text-white' : 'text-muted-foreground'}`}
-        >
-          {node.children.length}
-        </span>
-      </summary>
-      <div className="ml-4 border-l border-[#d2d9e6] pl-2">{children}</div>
-    </details>
   )
 }
 
