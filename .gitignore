@@ -46,3 +46,6 @@ next-env.d.ts
 # Notes de travail, non publiées.
 /ROADMAP.md
 /CURRENT_TASK.md
+
+# Notes de reprise, hors dépôt.
+/REPRISE.md

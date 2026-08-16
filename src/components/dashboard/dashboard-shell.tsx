@@ -160,6 +160,15 @@ export function DashboardShell({
       ],
     },
     {
+      label: 'Outils',
+      items: [
+        {
+          label: 'Doublons…',
+          href: `/doublons?espace=${encodeURIComponent(currentSpaceId)}`,
+        },
+      ],
+    },
+    {
       label: 'Espaces',
       items: [
         ...spaces.map((space) => ({
