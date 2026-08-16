@@ -43,20 +43,6 @@ next-env.d.ts
 
 /src/generated/prisma
 
-# Documentation d'agent installée par la CLI Prisma (~22k lignes de docs
-# éditeur). Réinstallable depuis skills-lock.json, qui reste versionné.
-/.agents/skills/
-/.claude/skills/
-/.windsurf/skills/
-
-# Fichiers d'outillage de développement, propres à chaque poste.
-/.claude/
-/.agents/
-/.windsurf/
-/AGENTS.md
-/CLAUDE.md
-/skills-lock.json
-
 # Notes de travail, non publiées.
-/CURRENT_TASK.md
 /ROADMAP.md
+/CURRENT_TASK.md

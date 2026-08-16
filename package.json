@@ -2,6 +2,13 @@
   "name": "thefavbook",
   "version": "0.1.0",
   "private": true,
+  "description": "Take back control of your browser bookmarks: import, sort with a language model, export back to any browser.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loxxar/thefavbook.git"
+  },
+  "homepage": "https://thefavbook.nodev.tn",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
