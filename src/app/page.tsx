@@ -11,17 +11,25 @@ import { requireUser } from '@/lib/auth/session'
 import { readBookmarkTree } from '@/lib/bookmarks/tree'
 import { countBookmarks } from '@/lib/bookmarks/types'
 import { getPrisma } from '@/lib/db'
+import { listSpaces, resolveSpaceId } from '@/lib/spaces/current'
 import { countSupporters } from '@/lib/support/count'
 
 /** Au-delà, la liste de triage devient illisible : on pagine par le triage. */
 const TRIAGE_PAGE_SIZE = 50
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: PageProps<'/'>) {
   const user = await requireUser()
   const prisma = getPrisma()
 
-  // Chaque requête filtre sur userId — c'est la seule barrière, voir
-  // CONVENTIONS.md.
+  const requested = (await searchParams).espace
+  const spaceId = await resolveSpaceId(
+    prisma,
+    user.id,
+    typeof requested === 'string' ? requested : undefined,
+  )
+
+  // Chaque requête filtre sur userId et sur l'espace — le premier cloisonne les
+  // comptes, le second les collections.
   const [
     nodes,
     folderCount,
@@ -30,19 +38,22 @@ export default async function HomePage() {
     pendingCount,
     pending,
     supporterCount,
+    spaces,
   ] = await Promise.all([
-    readBookmarkTree(prisma, user.id),
-    prisma.folder.count({ where: { userId: user.id } }),
+    readBookmarkTree(prisma, user.id, spaceId),
+    prisma.folder.count({ where: { userId: user.id, spaceId } }),
     prisma.user.findUnique({
       where: { id: user.id },
       select: { aiConsentAt: true },
     }),
     prisma.bookmark.count({
-      where: { userId: user.id, suggestion: { is: null } },
+      where: { userId: user.id, spaceId, suggestion: { is: null } },
     }),
-    prisma.suggestion.count({ where: { userId: user.id, status: 'PENDING' } }),
+    prisma.suggestion.count({
+      where: { userId: user.id, status: 'PENDING', bookmark: { spaceId } },
+    }),
     prisma.suggestion.findMany({
-      where: { userId: user.id, status: 'PENDING' },
+      where: { userId: user.id, status: 'PENDING', bookmark: { spaceId } },
       take: TRIAGE_PAGE_SIZE,
       orderBy: { createdAt: 'asc' },
       select: {
@@ -54,6 +65,7 @@ export default async function HomePage() {
       },
     }),
     countSupporters(),
+    listSpaces(prisma, user.id),
   ])
 
   const bookmarkCount = countBookmarks(nodes)
@@ -73,13 +85,9 @@ export default async function HomePage() {
       bookmarkCount={bookmarkCount}
       folderCount={folderCount}
       supporterCount={supporterCount}
+      spaces={spaces}
+      currentSpaceId={spaceId}
     >
-      {/*
-        Deux rangées. En haut les panneaux de travail, côte à côte et de
-        hauteur bornée : choisir un critère ou trancher des propositions ne
-        demande pas la moitié de l'écran. En bas les favoris, qui prennent tout
-        le reste — c'est là qu'on passe son temps.
-      */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
         {/*
           shrink-0 : une piste de grille `auto` se laisse comprimer quand la
@@ -89,26 +97,19 @@ export default async function HomePage() {
         */}
         {bookmarkCount > 0 && (
           <div className="grid shrink-0 gap-3 lg:grid-cols-2">
-            {/*
-              Pas de plafond de hauteur ici : les cinq critères et le bouton
-              de lancement doivent tenir sans défilement. Un panneau où
-              l'action principale est sous le pli se lit comme une liste, pas
-              comme une commande.
-            */}
             <MacWindow title="Ranger avec l’IA">
               <ClassifyPanel
                 hasConsent={account?.aiConsentAt != null}
                 unclassifiedCount={unclassifiedCount}
                 pendingCount={pendingCount}
+                spaceId={spaceId}
               />
             </MacWindow>
 
             {/*
               La fenêtre est posée en absolu dans un conteneur vide : elle
               n'impose alors aucune hauteur propre et épouse exactement celle
-              de la rangée, fixée par le panneau de gauche. Un simple plafond
-              la laissait plus courte, avec un vide sous elle ; sans plafond,
-              trois cents propositions auraient étiré toute la rangée.
+              de la rangée, fixée par le panneau de gauche.
             */}
             <div className="relative min-h-[320px]">
               <MacWindow
@@ -138,11 +139,11 @@ export default async function HomePage() {
         >
           {bookmarkCount === 0 ? (
             <p className="rounded-[6px] border border-dashed border-[#b3bac6] bg-[#f7f9fc] p-4 text-[12px] text-muted-foreground">
-              Aucun favori pour le moment. Ouvrez le menu Fichier puis «
-              Importer des favoris » pour déposer un export de navigateur.
+              Cet espace est vide. Ouvrez le menu Fichier puis « Importer des
+              favoris » pour y déposer un export de navigateur.
             </p>
           ) : (
-            <BookmarkBrowser nodes={nodes} />
+            <BookmarkBrowser nodes={nodes} spaceId={spaceId} />
           )}
         </MacWindow>
 

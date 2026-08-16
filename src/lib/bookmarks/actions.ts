@@ -13,6 +13,7 @@ import { parseNetscapeBookmarks } from '@/lib/bookmarks/parse'
 import { countBookmarks } from '@/lib/bookmarks/types'
 import { requireUser } from '@/lib/auth/session'
 import { getPrisma } from '@/lib/db'
+import { resolveSpaceId } from '@/lib/spaces/current'
 
 const fileSchema = z
   .instanceof(File)
@@ -44,6 +45,13 @@ export async function importBookmarksAction(
   formData: FormData,
 ): Promise<ImportActionState> {
   const user = await requireUser()
+  const prisma = getPrisma()
+  // L'import atterrit dans l'espace consulté, jamais ailleurs.
+  const spaceId = await resolveSpaceId(
+    prisma,
+    user.id,
+    formData.get('spaceId')?.toString(),
+  )
 
   const parsed = importSchema.safeParse({
     files: formData.getAll('files'),
@@ -58,7 +66,6 @@ export async function importBookmarksAction(
     }
   }
 
-  const prisma = getPrisma()
   const imported: ImportedFileSummary[] = []
 
   for (const file of parsed.data.files) {
@@ -75,6 +82,7 @@ export async function importBookmarksAction(
 
     const result = await importBookmarks(prisma, {
       userId: user.id,
+      spaceId,
       fileName: file.name,
       sourceLabel: parsed.data.sourceLabel,
       nodes,

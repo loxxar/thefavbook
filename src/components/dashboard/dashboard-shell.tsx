@@ -11,6 +11,12 @@ import { MacWindow } from '@/components/mac/mac-window'
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth/client'
 import { createFolderAction } from '@/lib/bookmarks/folder-actions'
+import {
+  createSpaceAction,
+  deleteSpaceAction,
+  renameSpaceAction,
+} from '@/lib/spaces/actions'
+import type { SpaceSummary } from '@/lib/spaces/current'
 import { deleteAccountAction } from '@/lib/auth/account-actions'
 
 interface DashboardShellProps {
@@ -18,6 +24,8 @@ interface DashboardShellProps {
   bookmarkCount: number
   folderCount: number
   supporterCount: number
+  spaces: SpaceSummary[]
+  currentSpaceId: string
   children: ReactNode
 }
 
@@ -33,6 +41,8 @@ export function DashboardShell({
   bookmarkCount,
   folderCount,
   supporterCount,
+  spaces,
+  currentSpaceId,
   children,
 }: DashboardShellProps) {
   const router = useRouter()
@@ -46,7 +56,7 @@ export function DashboardShell({
     // Un lien synthétique plutôt qu'une navigation : l'attribut `download`
     // garde son sens, et la page ne bouge pas.
     const link = document.createElement('a')
-    link.href = '/api/export'
+    link.href = `/api/export?espace=${encodeURIComponent(currentSpaceId)}`
     link.download = ''
     document.body.append(link)
     link.click()
@@ -54,6 +64,50 @@ export function DashboardShell({
 
     // La demande de soutien vient après le départ du téléchargement.
     if (shouldAskForTip()) setTimeout(() => setIsTipping(true), 1200)
+  }
+
+  const currentSpace = spaces.find((s) => s.id === currentSpaceId)
+
+  async function runSpace(kind: 'create' | 'rename' | 'delete') {
+    if (kind === 'delete') {
+      const label = currentSpace?.name ?? 'cet espace'
+      const count = currentSpace?.bookmarkCount ?? 0
+      const confirmed = confirm(
+        `Supprimer « ${label} » et ses ${count} favoris ? Cette action est irréversible.`,
+      )
+
+      if (!confirmed) return
+
+      const result = await deleteSpaceAction(currentSpaceId)
+
+      if (result.ok) {
+        router.replace('/')
+        router.refresh()
+        toast.success('Espace supprimé.')
+      } else {
+        toast.error(result.message)
+      }
+      return
+    }
+
+    const name = prompt(
+      kind === 'create' ? 'Nom du nouvel espace' : "Nouveau nom de l'espace",
+      kind === 'rename' ? (currentSpace?.name ?? '') : '',
+    )
+
+    if (name === null || name.trim() === '') return
+
+    const result =
+      kind === 'create'
+        ? await createSpaceAction(name)
+        : await renameSpaceAction(currentSpaceId, name)
+
+    if (result.ok) {
+      router.refresh()
+      toast.success(kind === 'create' ? 'Espace créé.' : 'Espace renommé.')
+    } else {
+      toast.error(result.message)
+    }
   }
 
   const menus: Menu[] = [
@@ -93,7 +147,7 @@ export function DashboardShell({
 
             if (name === null || name.trim() === '') return
 
-            const result = await createFolderAction(name, null)
+            const result = await createFolderAction(name, null, currentSpaceId)
 
             if (result.ok) {
               router.refresh()
@@ -102,6 +156,31 @@ export function DashboardShell({
               toast.error(result.message)
             }
           },
+        },
+      ],
+    },
+    {
+      label: 'Espaces',
+      items: [
+        ...spaces.map((space) => ({
+          // Passer par l'adresse plutôt que par un état client garde deux
+          // onglets indépendants et rend le lien partageable.
+          label: `${space.id === currentSpaceId ? '• ' : '   '}${space.name} (${space.bookmarkCount})`,
+          href: `/?espace=${encodeURIComponent(space.id)}`,
+        })),
+        {
+          label: 'Nouvel espace…',
+          separatorBefore: true,
+          onSelect: () => void runSpace('create'),
+        },
+        {
+          label: 'Renommer cet espace…',
+          onSelect: () => void runSpace('rename'),
+        },
+        {
+          label: 'Supprimer cet espace…',
+          onSelect: () => void runSpace('delete'),
+          disabled: spaces.length <= 1,
         },
       ],
     },
@@ -132,7 +211,8 @@ export function DashboardShell({
         menus={menus}
         trailing={
           <span className="hidden text-[12px] sm:inline">
-            {bookmarkCount} favoris · {folderCount} dossiers
+            {currentSpace?.name ?? 'Favoris'} · {bookmarkCount} favoris ·{' '}
+            {folderCount} dossiers
           </span>
         }
       />
@@ -144,7 +224,7 @@ export function DashboardShell({
           title="Importer des favoris"
           onClose={() => setIsImporting(false)}
         >
-          <ImportForm />
+          <ImportForm spaceId={currentSpaceId} />
         </Modal>
       )}
 

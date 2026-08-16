@@ -14,6 +14,7 @@ interface BookmarkTreeProps {
   nodes: readonly ParsedNode[]
   selectedUrl: string | null
   onSelect: (bookmark: ParsedBookmark) => void
+  spaceId: string
 }
 
 /**
@@ -26,6 +27,7 @@ export function BookmarkTree({
   nodes,
   selectedUrl,
   onSelect,
+  spaceId,
 }: BookmarkTreeProps) {
   if (nodes.length === 0) return null
 
@@ -34,11 +36,12 @@ export function BookmarkTree({
       {nodes.map((node, index) => (
         <li key={`${node.kind}-${node.id ?? node.title}-${index}`}>
           {isFolder(node) ? (
-            <FolderRow node={node} open={index === 0}>
+            <FolderRow node={node} open={index === 0} spaceId={spaceId}>
               <BookmarkTree
                 nodes={node.children}
                 selectedUrl={selectedUrl}
                 onSelect={onSelect}
+                spaceId={spaceId}
               />
             </FolderRow>
           ) : (

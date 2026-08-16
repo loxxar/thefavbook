@@ -18,7 +18,11 @@ export interface FolderResult {
   message: string
 }
 
-const nameSchema = z.string().trim().min(1, 'Nom vide.').max(120, 'Nom trop long.')
+const nameSchema = z
+  .string()
+  .trim()
+  .min(1, 'Nom vide.')
+  .max(120, 'Nom trop long.')
 
 export async function renameFolderAction(
   folderId: string,
@@ -28,7 +32,10 @@ export async function renameFolderAction(
   const parsed = nameSchema.safeParse(name)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? 'Nom invalide.' }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? 'Nom invalide.',
+    }
   }
 
   // Le filtre sur userId est la seule barrière entre deux comptes.
@@ -89,27 +96,40 @@ export async function deleteFolderAction(
 export async function createFolderAction(
   name: string,
   parentId: string | null,
+  spaceId: string,
 ): Promise<FolderResult> {
   const user = await requireUser()
   const parsed = nameSchema.safeParse(name)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? 'Nom invalide.' }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? 'Nom invalide.',
+    }
   }
 
   const prisma = getPrisma()
 
+  const space = await prisma.space.findFirst({
+    where: { id: spaceId, userId: user.id },
+    select: { id: true },
+  })
+
+  if (space === null) return { ok: false, message: 'Espace introuvable.' }
+
   if (parentId !== null) {
     const parent = await prisma.folder.findFirst({
-      where: { id: parentId, userId: user.id },
+      where: { id: parentId, userId: user.id, spaceId: space.id },
       select: { id: true },
     })
 
-    if (parent === null) return { ok: false, message: 'Dossier parent introuvable.' }
+    if (parent === null) {
+      return { ok: false, message: 'Dossier parent introuvable.' }
+    }
   }
 
   const existing = await prisma.folder.findFirst({
-    where: { userId: user.id, parentId, name: parsed.data },
+    where: { userId: user.id, spaceId: space.id, parentId, name: parsed.data },
     select: { id: true },
   })
 
@@ -118,7 +138,7 @@ export async function createFolderAction(
   }
 
   const last = await prisma.folder.findFirst({
-    where: { userId: user.id, parentId },
+    where: { userId: user.id, spaceId: space.id, parentId },
     orderBy: { position: 'desc' },
     select: { position: true },
   })
@@ -126,6 +146,7 @@ export async function createFolderAction(
   await prisma.folder.create({
     data: {
       userId: user.id,
+      spaceId: space.id,
       parentId,
       name: parsed.data,
       position: (last?.position ?? -1) + 1,

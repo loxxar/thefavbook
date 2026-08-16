@@ -48,7 +48,7 @@ export async function moveBookmarkAction(
   // barrière entre deux comptes, aucune RLS ne veille derrière.
   const bookmark = await prisma.bookmark.findFirst({
     where: { id: parsed.data.bookmarkId, userId: user.id },
-    select: { folderId: true },
+    select: { folderId: true, spaceId: true },
   })
 
   if (bookmark === null) {
@@ -56,15 +56,21 @@ export async function moveBookmarkAction(
   }
 
   if (parsed.data.folderId !== null) {
+    // Le dossier doit appartenir au même espace, sinon un glissement
+    // mélangerait deux collections que l'utilisateur avait séparées.
     const folder = await prisma.folder.findFirst({
-      where: { id: parsed.data.folderId, userId: user.id },
+      where: {
+        id: parsed.data.folderId,
+        userId: user.id,
+        spaceId: bookmark.spaceId,
+      },
       select: { id: true },
     })
 
     if (folder === null) {
       return {
         ok: false,
-        message: 'Dossier introuvable.',
+        message: 'Dossier introuvable dans cet espace.',
         previousFolderId: null,
       }
     }
@@ -82,7 +88,11 @@ export async function moveBookmarkAction(
   // décaler toutes les positions suivantes, pour un ordre que personne n'a
   // encore choisi.
   const last = await prisma.bookmark.findFirst({
-    where: { userId: user.id, folderId: parsed.data.folderId },
+    where: {
+      userId: user.id,
+      spaceId: bookmark.spaceId,
+      folderId: parsed.data.folderId,
+    },
     orderBy: { position: 'desc' },
     select: { position: true },
   })

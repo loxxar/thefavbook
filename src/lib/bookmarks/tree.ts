@@ -13,10 +13,11 @@ import type { ParsedFolder, ParsedNode } from '@/lib/bookmarks/types'
 export async function readBookmarkTree(
   prisma: PrismaClient,
   userId: string,
+  spaceId: string,
 ): Promise<ParsedNode[]> {
   const [folders, bookmarks] = await Promise.all([
     prisma.folder.findMany({
-      where: { userId },
+      where: { userId, spaceId },
       orderBy: [{ position: 'asc' }, { name: 'asc' }],
       select: {
         id: true,
@@ -28,7 +29,7 @@ export async function readBookmarkTree(
       },
     }),
     prisma.bookmark.findMany({
-      where: { userId },
+      where: { userId, spaceId },
       orderBy: [{ position: 'asc' }, { title: 'asc' }],
       select: {
         id: true,

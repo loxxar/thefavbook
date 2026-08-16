@@ -36,6 +36,7 @@ model User {
   sessions    Session[]
   accounts    Account[]
   suggestions Suggestion[]
+  spaces      Space[]
 
   folders       Folder[]
   bookmarks     Bookmark[]
@@ -104,6 +105,32 @@ model Verification {
   @@map("verification")
 }
 
+/// Un espace regroupe une collection indépendante : travail, personnel, enfants.
+///
+/// POURQUOI un modèle plutôt qu'un dossier racine : un espace s'exporte seul,
+/// se range seul, et ne doit jamais apparaître dans l'arbre d'un autre. Le
+/// confondre avec un dossier obligerait à l'exclure partout, un oubli suffisant
+/// à mélanger deux collections.
+model Space {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  /// Rang d'affichage dans le sélecteur.
+  position  Int     @default(0)
+  /// L'espace créé d'office, celui qui ne peut pas être supprimé.
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  folders   Folder[]
+  bookmarks Bookmark[]
+
+  @@unique([userId, name])
+  @@index([userId, position])
+}
+
 /// Un import = un fichier HTML déposé. Conservé pour pouvoir répondre à
 /// « d'où vient ce favori ? » et pour annuler un import entier d'un bloc.
 model ImportBatch {
@@ -127,6 +154,8 @@ model Folder {
   id       String  @id @default(cuid())
   userId   String
   user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spaceId  String
+  space    Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   parentId String?
   parent   Folder? @relation("FolderTree", fields: [parentId], references: [id], onDelete: Cascade)
 
@@ -148,13 +177,15 @@ model Folder {
   children  Folder[]   @relation("FolderTree")
   bookmarks Bookmark[]
 
-  @@index([userId, parentId, position])
+  @@index([userId, spaceId, parentId, position])
 }
 
 model Bookmark {
   id       String  @id @default(cuid())
   userId   String
   user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spaceId  String
+  space    Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   folderId String?
   folder   Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
@@ -186,7 +217,7 @@ model Bookmark {
   tags       BookmarkTag[]
   suggestion Suggestion?
 
-  @@index([userId, folderId, position])
+  @@index([userId, spaceId, folderId, position])
   @@index([userId, hostname])
 }
 

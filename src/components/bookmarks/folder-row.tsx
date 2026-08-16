@@ -14,6 +14,7 @@ import type { ParsedFolder } from '@/lib/bookmarks/types'
 interface FolderRowProps {
   node: ParsedFolder
   open: boolean
+  spaceId: string
   children: ReactNode
 }
 
@@ -23,7 +24,7 @@ interface FolderRowProps {
  * Les commandes n'apparaissent qu'au survol ou au focus. Toujours visibles,
  * elles noieraient une arborescence de plusieurs centaines de dossiers.
  */
-export function FolderRow({ node, open, children }: FolderRowProps) {
+export function FolderRow({ node, open, spaceId, children }: FolderRowProps) {
   const [isRenaming, setIsRenaming] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -89,7 +90,7 @@ export function FolderRow({ node, open, children }: FolderRowProps) {
                     const name = prompt('Nom du sous-dossier')
 
                     if (name !== null && name.trim() !== '') {
-                      run(() => createFolderAction(name, folderId))
+                      run(() => createFolderAction(name, folderId, spaceId))
                     }
                   }}
                 >

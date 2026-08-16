@@ -19,6 +19,7 @@ import type { ParsedBookmark, ParsedNode } from '@/lib/bookmarks/types'
 
 interface BookmarkBrowserProps {
   nodes: ParsedNode[]
+  spaceId: string
 }
 
 /**
@@ -27,7 +28,7 @@ interface BookmarkBrowserProps {
  * En dessous de `lg`, le panneau passe sous l'arbre : côte à côte, aucun des
  * deux ne serait lisible.
  */
-export function BookmarkBrowser({ nodes }: BookmarkBrowserProps) {
+export function BookmarkBrowser({ nodes, spaceId }: BookmarkBrowserProps) {
   const [selected, setSelected] = useState<ParsedBookmark | null>(null)
   const [dragged, setDragged] = useState<string | null>(null)
   const [, startTransition] = useTransition()
@@ -90,6 +91,7 @@ export function BookmarkBrowser({ nodes }: BookmarkBrowserProps) {
             nodes={nodes}
             selectedUrl={selected?.url ?? null}
             onSelect={setSelected}
+            spaceId={spaceId}
           />
         </div>
 

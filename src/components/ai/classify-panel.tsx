@@ -23,6 +23,7 @@ interface ClassifyPanelProps {
   unclassifiedCount: number
   /** Propositions déjà produites, en attente d'arbitrage. */
   pendingCount: number
+  spaceId: string
 }
 
 function wait(ms: number): Promise<void> {
@@ -33,6 +34,7 @@ export function ClassifyPanel({
   hasConsent,
   unclassifiedCount,
   pendingCount,
+  spaceId,
 }: ClassifyPanelProps) {
   const [isPending, startTransition] = useTransition()
   const [remaining, setRemaining] = useState<number | null>(null)
@@ -101,7 +103,7 @@ export function ClassifyPanel({
     for (;;) {
       if (stopRef.current) break
 
-      const result = await classifyNextBatchAction(styleId)
+      const result = await classifyNextBatchAction(styleId, spaceId)
 
       if (result.status === 'error') {
         toast.error(result.message)

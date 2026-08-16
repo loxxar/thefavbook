@@ -20,6 +20,7 @@ import { getPrisma } from '@/lib/db'
  */
 export async function classifyNextBatchAction(
   styleId: string,
+  spaceId: string,
 ): Promise<ClassifyBatchResult> {
   const user = await requireUser()
   const prisma = getPrisma()
@@ -42,7 +43,7 @@ export async function classifyNextBatchAction(
   }
 
   const pending = await prisma.bookmark.findMany({
-    where: { userId: user.id, suggestion: { is: null } },
+    where: { userId: user.id, spaceId, suggestion: { is: null } },
     select: { id: true, title: true, url: true },
     take: CLASSIFY_BATCH_SIZE,
     orderBy: { createdAt: 'asc' },
@@ -62,13 +63,13 @@ export async function classifyNextBatchAction(
   // ce qui empêche l'arborescence de diverger d'un lot à l'autre.
   const [folders, suggested] = await Promise.all([
     prisma.folder.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, spaceId },
       select: { name: true },
       distinct: ['name'],
       take: 60,
     }),
     prisma.suggestion.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, bookmark: { spaceId } },
       select: { folderPath: true },
       distinct: ['folderPath'],
       take: 60,
@@ -105,7 +106,7 @@ export async function classifyNextBatchAction(
     }
 
     const remaining = await prisma.bookmark.count({
-      where: { userId: user.id, suggestion: { is: null } },
+      where: { userId: user.id, spaceId, suggestion: { is: null } },
     })
 
     revalidatePath('/')
@@ -126,7 +127,7 @@ export async function classifyNextBatchAction(
     }
   } catch (error) {
     const remaining = await prisma.bookmark.count({
-      where: { userId: user.id, suggestion: { is: null } },
+      where: { userId: user.id, spaceId, suggestion: { is: null } },
     })
 
     // Un quota n'est pas une panne : les favoris déjà classés sont acquis et
@@ -163,10 +164,13 @@ export async function acceptSuggestionAction(
 
   const suggestion = await prisma.suggestion.findFirst({
     where: { id: suggestionId, userId: user.id, status: 'PENDING' },
+    include: { bookmark: { select: { spaceId: true } } },
   })
 
   if (suggestion === null) return
 
+  // Les dossiers naissent dans l'espace du favori, jamais ailleurs.
+  const spaceId = suggestion.bookmark.spaceId
   let parentId: string | null = null
 
   // Le chemin est créé niveau par niveau, en réutilisant ce qui existe déjà.
@@ -174,7 +178,7 @@ export async function acceptSuggestionAction(
     if (name === '') continue
 
     const existing: { id: string } | null = await prisma.folder.findFirst({
-      where: { userId: user.id, parentId, name },
+      where: { userId: user.id, spaceId, parentId, name },
       select: { id: true },
     })
 
@@ -184,7 +188,7 @@ export async function acceptSuggestionAction(
     }
 
     const created: { id: string } = await prisma.folder.create({
-      data: { userId: user.id, parentId, name },
+      data: { userId: user.id, spaceId, parentId, name },
       select: { id: true },
     })
     parentId = created.id

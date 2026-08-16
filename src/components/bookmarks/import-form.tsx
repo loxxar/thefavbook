@@ -8,7 +8,12 @@ import { Label } from '@/components/ui/label'
 import { importBookmarksAction } from '@/lib/bookmarks/actions'
 import { INITIAL_IMPORT_STATE } from '@/lib/bookmarks/import-state'
 
-export function ImportForm() {
+interface ImportFormProps {
+  /** L'import atterrit dans cet espace. */
+  spaceId: string
+}
+
+export function ImportForm({ spaceId }: ImportFormProps) {
   const [state, formAction, isPending] = useActionState(
     importBookmarksAction,
     INITIAL_IMPORT_STATE,
@@ -16,6 +21,7 @@ export function ImportForm() {
 
   return (
     <form action={formAction} className="space-y-4">
+      <input type="hidden" name="spaceId" value={spaceId} />
       <div className="space-y-1.5">
         <Label htmlFor="files" className="text-[12px] font-semibold">
           Fichiers de favoris
