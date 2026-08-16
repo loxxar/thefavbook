@@ -28,7 +28,7 @@ function readApiKey(): string {
 
   if (key === undefined || key === '') {
     throw new AiError(
-      "OPENROUTER_API_KEY est absente : le classement automatique est indisponible.",
+      'OPENROUTER_API_KEY est absente : le classement automatique est indisponible.',
     )
   }
 

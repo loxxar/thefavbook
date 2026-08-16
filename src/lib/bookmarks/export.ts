@@ -1,4 +1,9 @@
-import { isFolder, type ParsedBookmark, type ParsedFolder, type ParsedNode } from './types'
+import {
+  isFolder,
+  type ParsedBookmark,
+  type ParsedFolder,
+  type ParsedNode,
+} from './types'
 
 /**
  * Écriture au Netscape Bookmark File Format.
@@ -106,7 +111,9 @@ function writeBookmark(
       : null,
   ].filter((attribute): attribute is string => attribute !== null)
 
-  lines.push(`${pad}<DT><A ${attributes.join(' ')}>${escapeText(bookmark.title)}</A>`)
+  lines.push(
+    `${pad}<DT><A ${attributes.join(' ')}>${escapeText(bookmark.title)}</A>`,
+  )
 
   if (bookmark.description !== null && bookmark.description !== '') {
     lines.push(`${pad}<DD>${escapeText(bookmark.description)}`)

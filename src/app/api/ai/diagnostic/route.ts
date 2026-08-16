@@ -28,20 +28,23 @@ export async function GET(): Promise<Response> {
 
   const model = process.env.OPENROUTER_MODEL ?? 'google/gemini-2.5-flash-lite'
 
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${key}`,
-      'Content-Type': 'application/json',
-      'X-Title': 'thefavbook',
+  const response = await fetch(
+    'https://openrouter.ai/api/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        'X-Title': 'thefavbook',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content: 'Réponds exactement : ok' }],
+        max_tokens: 5,
+        provider: { data_collection: 'deny', require_parameters: true },
+      }),
     },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'user', content: 'Réponds exactement : ok' }],
-      max_tokens: 5,
-      provider: { data_collection: 'deny', require_parameters: true },
-    }),
-  })
+  )
 
   const payload: unknown = await response.json()
 
@@ -56,7 +59,8 @@ export async function GET(): Promise<Response> {
 }
 
 function resume(payload: unknown): string {
-  if (typeof payload !== 'object' || payload === null) return 'réponse illisible'
+  if (typeof payload !== 'object' || payload === null)
+    return 'réponse illisible'
 
   const error = (payload as { error?: { message?: unknown } }).error
 

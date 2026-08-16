@@ -61,7 +61,11 @@ export function DashboardShell({
       icon: <AppleMark />,
       items: [
         { label: 'thefavbook', href: '/' },
-        { label: 'Confidentialité', href: '/confidentialite', separatorBefore: true },
+        {
+          label: 'Confidentialité',
+          href: '/confidentialite',
+          separatorBefore: true,
+        },
         {
           label: 'Code source',
           href: 'https://github.com/loxxar/thefavbook',
@@ -71,7 +75,10 @@ export function DashboardShell({
     {
       label: 'Fichier',
       items: [
-        { label: 'Importer des favoris…', onSelect: () => setIsImporting(true) },
+        {
+          label: 'Importer des favoris…',
+          onSelect: () => setIsImporting(true),
+        },
         {
           label: 'Exporter en HTML',
           onSelect: exportBookmarks,
@@ -114,7 +121,10 @@ export function DashboardShell({
       {children}
 
       {isImporting && (
-        <Modal title="Importer des favoris" onClose={() => setIsImporting(false)}>
+        <Modal
+          title="Importer des favoris"
+          onClose={() => setIsImporting(false)}
+        >
           <ImportForm />
         </Modal>
       )}

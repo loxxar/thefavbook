@@ -162,7 +162,11 @@ export function parseNetscapeBookmarks(html: string): ParsedNode[] {
         }
       },
     },
-    { decodeEntities: true, lowerCaseTags: true, lowerCaseAttributeNames: true },
+    {
+      decodeEntities: true,
+      lowerCaseTags: true,
+      lowerCaseAttributeNames: true,
+    },
   )
 
   parser.write(html)

@@ -1,23 +1,23 @@
-import { ClassifyPanel } from "@/components/ai/classify-panel";
+import { ClassifyPanel } from '@/components/ai/classify-panel'
 import {
   SuggestionList,
   type SuggestionRow,
-} from "@/components/ai/suggestion-list";
-import { BookmarkBrowser } from "@/components/bookmarks/bookmark-browser";
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { MacWindow } from "@/components/mac/mac-window";
-import { requireUser } from "@/lib/auth/session";
-import { readBookmarkTree } from "@/lib/bookmarks/tree";
-import { countBookmarks } from "@/lib/bookmarks/types";
-import { getPrisma } from "@/lib/db";
-import { countSupporters } from "@/lib/support/count";
+} from '@/components/ai/suggestion-list'
+import { BookmarkBrowser } from '@/components/bookmarks/bookmark-browser'
+import { DashboardShell } from '@/components/dashboard/dashboard-shell'
+import { MacWindow } from '@/components/mac/mac-window'
+import { requireUser } from '@/lib/auth/session'
+import { readBookmarkTree } from '@/lib/bookmarks/tree'
+import { countBookmarks } from '@/lib/bookmarks/types'
+import { getPrisma } from '@/lib/db'
+import { countSupporters } from '@/lib/support/count'
 
 /** Au-delà, la liste de triage devient illisible : on pagine par le triage. */
-const TRIAGE_PAGE_SIZE = 50;
+const TRIAGE_PAGE_SIZE = 50
 
 export default async function HomePage() {
-  const user = await requireUser();
-  const prisma = getPrisma();
+  const user = await requireUser()
+  const prisma = getPrisma()
 
   // Chaque requête filtre sur userId — c'est la seule barrière, voir
   // CONVENTIONS.md.
@@ -39,11 +39,11 @@ export default async function HomePage() {
     prisma.bookmark.count({
       where: { userId: user.id, suggestion: { is: null } },
     }),
-    prisma.suggestion.count({ where: { userId: user.id, status: "PENDING" } }),
+    prisma.suggestion.count({ where: { userId: user.id, status: 'PENDING' } }),
     prisma.suggestion.findMany({
-      where: { userId: user.id, status: "PENDING" },
+      where: { userId: user.id, status: 'PENDING' },
       take: TRIAGE_PAGE_SIZE,
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: 'asc' },
       select: {
         id: true,
         folderPath: true,
@@ -53,9 +53,9 @@ export default async function HomePage() {
       },
     }),
     countSupporters(),
-  ]);
+  ])
 
-  const bookmarkCount = countBookmarks(nodes);
+  const bookmarkCount = countBookmarks(nodes)
 
   const suggestions: SuggestionRow[] = pending.map((s) => ({
     id: s.id,
@@ -64,7 +64,7 @@ export default async function HomePage() {
     newTitle: s.title,
     bookmarkTitle: s.bookmark.title,
     bookmarkUrl: s.bookmark.url,
-  }));
+  }))
 
   return (
     <DashboardShell
@@ -113,7 +113,7 @@ export default async function HomePage() {
 
         <MacWindow
           title="Mes favoris"
-          status={`${bookmarkCount} favori${bookmarkCount > 1 ? "s" : ""}, ${folderCount} dossier${folderCount > 1 ? "s" : ""}`}
+          status={`${bookmarkCount} favori${bookmarkCount > 1 ? 's' : ''}, ${folderCount} dossier${folderCount > 1 ? 's' : ''}`}
           className="min-h-0"
         >
           {bookmarkCount === 0 ? (
@@ -127,5 +127,5 @@ export default async function HomePage() {
         </MacWindow>
       </div>
     </DashboardShell>
-  );
+  )
 }

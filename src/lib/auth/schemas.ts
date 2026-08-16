@@ -10,19 +10,16 @@ import { z } from 'zod'
 export const PASSWORD_MIN_LENGTH = 12
 
 export const signInSchema = z.object({
-  email: z.email("Adresse e-mail invalide."),
+  email: z.email('Adresse e-mail invalide.'),
   password: z.string().min(1, 'Mot de passe requis.'),
 })
 
 export const createAccountSchema = z.object({
   name: z.string().trim().min(1, 'Nom requis.'),
-  email: z.email("Adresse e-mail invalide."),
+  email: z.email('Adresse e-mail invalide.'),
   password: z
     .string()
-    .min(
-      PASSWORD_MIN_LENGTH,
-      `Au moins ${PASSWORD_MIN_LENGTH} caractères.`,
-    ),
+    .min(PASSWORD_MIN_LENGTH, `Au moins ${PASSWORD_MIN_LENGTH} caractères.`),
 })
 
 export type SignInInput = z.infer<typeof signInSchema>

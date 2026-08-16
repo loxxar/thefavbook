@@ -30,7 +30,8 @@ export const CLASSIFICATION_STYLES: ClassificationStyle[] = [
   {
     id: 'type',
     label: 'Par type de ressource',
-    summary: 'Ce que c’est : Documentation, Outils, Articles, Vidéos, Boutiques…',
+    summary:
+      'Ce que c’est : Documentation, Outils, Articles, Vidéos, Boutiques…',
     rules: `- Regroupe par nature de la ressource : documentation, outil en ligne,
   article, vidéo, boutique, tableau de bord, formulaire, forum.
 - Le second niveau précise le domaine. Exemple : "Documentation / Développement".

@@ -52,9 +52,15 @@ describe('canonicalizeUrl', () => {
   })
 
   it('should drop the port when it is the default for the scheme', () => {
-    expect(canonicalizeUrl('http://example.com:80/a')).toBe('https://example.com/a')
-    expect(canonicalizeUrl('https://example.com:443/a')).toBe('https://example.com/a')
-    expect(canonicalizeUrl('http://localhost:3000/a')).toBe('https://localhost:3000/a')
+    expect(canonicalizeUrl('http://example.com:80/a')).toBe(
+      'https://example.com/a',
+    )
+    expect(canonicalizeUrl('https://example.com:443/a')).toBe(
+      'https://example.com/a',
+    )
+    expect(canonicalizeUrl('http://localhost:3000/a')).toBe(
+      'https://localhost:3000/a',
+    )
   })
 
   it('should not merge distinct pages when only the path differs', () => {
@@ -77,7 +83,9 @@ describe('canonicalizeUrl', () => {
 describe('extractHostname', () => {
   it('should return the hostname without www when the URL is valid', () => {
     expect(extractHostname('https://www.example.com/a?b=1')).toBe('example.com')
-    expect(extractHostname('http://sub.example.co.uk/')).toBe('sub.example.co.uk')
+    expect(extractHostname('http://sub.example.co.uk/')).toBe(
+      'sub.example.co.uk',
+    )
   })
 
   it('should return null when the URL cannot be parsed', () => {

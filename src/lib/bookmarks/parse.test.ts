@@ -49,13 +49,15 @@ describe('parseNetscapeBookmarks', () => {
     expect(tree).toHaveLength(2)
 
     const toolbar = tree[0]
-    if (!isFolder(toolbar)) throw new Error('le premier nœud doit être un dossier')
+    if (!isFolder(toolbar))
+      throw new Error('le premier nœud doit être un dossier')
     expect(toolbar.title).toBe('Barre de favoris')
     expect(toolbar.isToolbar).toBe(true)
     expect(toolbar.children).toHaveLength(3)
 
     const dev = toolbar.children[1]
-    if (!isFolder(dev)) throw new Error('le second enfant doit être le dossier Dev')
+    if (!isFolder(dev))
+      throw new Error('le second enfant doit être le dossier Dev')
     expect(dev.title).toBe('Dev')
     expect(dev.children.map((child) => child.title)).toEqual([
       'JavaScript | MDN',
@@ -126,7 +128,9 @@ describe('parseNetscapeBookmarks', () => {
 
   it('should return an empty tree when the file contains no bookmarks', () => {
     expect(parseNetscapeBookmarks('')).toEqual([])
-    expect(parseNetscapeBookmarks('<html><body>rien ici</body></html>')).toEqual([])
+    expect(
+      parseNetscapeBookmarks('<html><body>rien ici</body></html>'),
+    ).toEqual([])
   })
 
   it('should skip anchors when the HREF attribute is missing or blank', () => {
@@ -219,9 +223,12 @@ describe('round-trip import → export', () => {
   })
 
   it('should survive a second export when the tree is exported twice', () => {
-    const once = exportNetscapeBookmarks(parseNetscapeBookmarks(CHROME_EXPORT), {
-      includeIcons: true,
-    })
+    const once = exportNetscapeBookmarks(
+      parseNetscapeBookmarks(CHROME_EXPORT),
+      {
+        includeIcons: true,
+      },
+    )
     const twice = exportNetscapeBookmarks(parseNetscapeBookmarks(once), {
       includeIcons: true,
     })
@@ -230,7 +237,9 @@ describe('round-trip import → export', () => {
   })
 
   it('should drop inline icons when includeIcons is left at its default', () => {
-    const output = exportNetscapeBookmarks(parseNetscapeBookmarks(CHROME_EXPORT))
+    const output = exportNetscapeBookmarks(
+      parseNetscapeBookmarks(CHROME_EXPORT),
+    )
     expect(output).not.toContain('ICON=')
   })
 

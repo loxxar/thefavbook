@@ -92,10 +92,7 @@ export function MenuBar({ menus, trailing }: MenuBarProps) {
                     {item.separatorBefore === true && (
                       <hr className="my-1 border-[#d9d9d9]" />
                     )}
-                    <MenuEntry
-                      item={item}
-                      onDone={() => setOpenIndex(null)}
-                    />
+                    <MenuEntry item={item} onDone={() => setOpenIndex(null)} />
                   </li>
                 ))}
               </ul>

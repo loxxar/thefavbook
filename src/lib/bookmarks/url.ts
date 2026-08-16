@@ -91,12 +91,12 @@ export function canonicalizeUrl(raw: string): string {
 
   const params = [...parsed.searchParams.entries()]
     .filter(([name]) => !isTrackingParam(name))
-    .sort(([a, aVal], [b, bVal]) => a.localeCompare(b) || aVal.localeCompare(bVal))
+    .sort(
+      ([a, aVal], [b, bVal]) => a.localeCompare(b) || aVal.localeCompare(bVal),
+    )
 
   const search =
-    params.length > 0
-      ? `?${params.map(([k, v]) => `${k}=${v}`).join('&')}`
-      : ''
+    params.length > 0 ? `?${params.map(([k, v]) => `${k}=${v}`).join('&')}` : ''
 
   // Le fragment est ignoré, SAUF le hashbang qui, sur les vieilles SPA,
   // désigne une route distincte et donc une page réellement différente.

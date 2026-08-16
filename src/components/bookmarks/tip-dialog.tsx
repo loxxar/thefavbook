@@ -59,8 +59,8 @@ export function TipDialog({
 
             {supporterCount > 0 && (
               <p className="text-[11px] text-muted-foreground">
-                {supporterCount} personne{supporterCount > 1 ? 's' : ''} l&apos;ont
-                déjà fait.
+                {supporterCount} personne{supporterCount > 1 ? 's' : ''}{' '}
+                l&apos;ont déjà fait.
               </p>
             )}
 

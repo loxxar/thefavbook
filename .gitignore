@@ -48,3 +48,15 @@ next-env.d.ts
 /.agents/skills/
 /.claude/skills/
 /.windsurf/skills/
+
+# Fichiers d'outillage de développement, propres à chaque poste.
+/.claude/
+/.agents/
+/.windsurf/
+/AGENTS.md
+/CLAUDE.md
+/skills-lock.json
+
+# Notes de travail, non publiées.
+/CURRENT_TASK.md
+/ROADMAP.md

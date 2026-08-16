@@ -114,7 +114,10 @@ export function ClassifyPanel({
         setBatchNumber((n) => n + 1)
         // Le plus récent en tête : c'est ce qu'on regarde.
         setLog((previous) =>
-          [...result.samples.slice().reverse(), ...previous].slice(0, LOG_LENGTH),
+          [...result.samples.slice().reverse(), ...previous].slice(
+            0,
+            LOG_LENGTH,
+          ),
         )
         setFolderCounts((previous) => {
           const next = new Map(previous)
@@ -242,10 +245,10 @@ export function ClassifyPanel({
 
       {pendingCount > 0 && !isRunning && (
         <p className="rounded-[4px] border border-[#d2d9e6] bg-[#f7f9fc] p-2 text-[11px] text-muted-foreground">
-          {pendingCount} proposition{pendingCount > 1 ? 's' : ''} attendent
-          déjà votre arbitrage. Changer de critère n&apos;a d&apos;effet que sur
-          les favoris non encore analysés — pour repartir d&apos;une page
-          blanche, effacez-les d&apos;abord.{' '}
+          {pendingCount} proposition{pendingCount > 1 ? 's' : ''} attendent déjà
+          votre arbitrage. Changer de critère n&apos;a d&apos;effet que sur les
+          favoris non encore analysés — pour repartir d&apos;une page blanche,
+          effacez-les d&apos;abord.{' '}
           <button
             type="button"
             className="underline underline-offset-2"

@@ -1,6 +1,10 @@
 'use client'
 
-import { isFolder, type ParsedBookmark, type ParsedNode } from '@/lib/bookmarks/types'
+import {
+  isFolder,
+  type ParsedBookmark,
+  type ParsedNode,
+} from '@/lib/bookmarks/types'
 
 interface BookmarkTreeProps {
   nodes: readonly ParsedNode[]

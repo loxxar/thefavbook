@@ -36,14 +36,15 @@ const responseSchema: JsonSchema = {
       items: {
         type: 'object',
         properties: {
-          id: { type: 'string', description: "Identifiant fourni en entrée" },
+          id: { type: 'string', description: 'Identifiant fourni en entrée' },
           folderPath: {
             type: 'string',
             description: 'Chemin du dossier, niveaux séparés par " / "',
           },
           title: {
             type: 'string',
-            description: 'Titre réécrit, ou chaîne vide si celui d’origine convient',
+            description:
+              'Titre réécrit, ou chaîne vide si celui d’origine convient',
           },
           reason: { type: 'string', description: 'Justification en une ligne' },
         },
@@ -116,13 +117,18 @@ export async function classifyBookmarks(
 
   const wanted = new Set(bookmarks.map((b) => b.id))
 
-  return result.assignments
-    // Le modèle peut inventer un identifiant : on ne garde que ceux envoyés.
-    .filter((a) => wanted.has(a.id) && a.folderPath.trim() !== '')
-    .map((a) => ({
-      id: a.id,
-      folderPath: a.folderPath.trim(),
-      title: a.title !== undefined && a.title.trim() !== '' ? a.title.trim() : null,
-      reason: a.reason.trim() === '' ? null : a.reason.trim(),
-    }))
+  return (
+    result.assignments
+      // Le modèle peut inventer un identifiant : on ne garde que ceux envoyés.
+      .filter((a) => wanted.has(a.id) && a.folderPath.trim() !== '')
+      .map((a) => ({
+        id: a.id,
+        folderPath: a.folderPath.trim(),
+        title:
+          a.title !== undefined && a.title.trim() !== ''
+            ? a.title.trim()
+            : null,
+        reason: a.reason.trim() === '' ? null : a.reason.trim(),
+      }))
+  )
 }

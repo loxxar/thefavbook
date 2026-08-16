@@ -12,11 +12,11 @@ connaissance de cause.
 > journal. Le choix d'un Postgres hébergé plutôt que de SQLite tient toujours ;
 > seul l'hébergeur change.
 
-**Contexte.** L'outil est mono-utilisateur et manipule une donnée personnelle
-(l'historique de navigation en clair). SQLite en fichier local avait été
-recommandé : zéro auth à écrire, zéro hébergement, rien qui sorte de la machine.
+**Contexte.** L'outil manipule une donnée sensible : la liste des sites qu'une
+personne fréquente. SQLite en fichier local évitait toute authentification et
+tout hébergement, mais interdisait l'accès depuis plusieurs machines.
 
-**Décision.** Supabase Postgres, choix explicite de l'utilisateur.
+**Décision.** Un Postgres hébergé.
 
 **Conséquences.** L'authentification devient obligatoire dès le Lot 1, et
 `userId` figure sur toutes les tables dès la première migration — l'ajouter
@@ -26,8 +26,8 @@ après aurait imposé une migration pénible sur des données réelles.
 
 ## 2026-08-12 — Next.js 16 plutôt que Next.js 15
 
-**Contexte.** Le référentiel personnel mentionne Next.js 15, mais impose aussi
-« dernières versions stables, toujours ». Next 16 est stable.
+**Contexte.** La documentation la plus répandue vise encore Next.js 15. La 16
+est stable, et la règle du projet est de partir sur la dernière version stable.
 
 **Décision.** Next.js 16.3.
 
@@ -84,18 +84,18 @@ indexer serait de la complexité sans contrepartie.
 
 ## 2026-08-12 — Classement par règles, IA écartée du chemin principal
 
-**Contexte.** Demande explicite d'un classement performant et autonome.
+> **Renversée** — voir « Classement par modèle de langage » en fin de journal.
+> L'analyse des limites d'un moteur de règles reste valable : c'est elle qui a
+> conduit au renversement.
+
+**Contexte.** Un classement automatique était attendu, sans dépendance externe.
 
 **Décision.** Moteur de règles déterministe (domaine, TLD, mots-clés) comme
-unique mécanisme de classement automatique. Aucun appel à une API de LLM.
+unique mécanisme de classement. Aucun appel à une API de modèle de langage.
 
-**Piste conservée pour le Lot 4.** Les règles couvrent environ 60 à 70 % d'une
-collection ; les titres inutiles (`Untitled`, `Home`) et les domaines obscurs
-leur échappent. Des embeddings locaux (`transformers.js` sur un petit modèle
-ONNX) donneraient un regroupement sémantique réel, hors ligne et sans coût.
-Ils ne tiennent pas dans une fonction Vercel : ce serait un script CLI lancé
-sur la machine de l'utilisateur, écrivant ses suggestions en base. À décider le
-moment venu.
+**Limite identifiée.** Les règles couvrent environ 60 à 70 % d'une collection.
+Les titres inutiles (`Untitled`, `Home`) et les domaines obscurs leur
+échappent.
 
 ---
 
@@ -117,8 +117,8 @@ test de round-trip, qui exige une restitution à l'identique.
 
 **Contexte.** Sur l'offre gratuite, Supabase met un projet en pause après sept
 jours de faible activité. La reprise est **manuelle** depuis le dashboard, et un
-projet laissé en pause finit supprimé. Cet outil est personnel et sera utilisé
-par à-coups : la pause serait l'état normal, pas l'exception.
+projet laissé en pause finit supprimé. L'outil est utilisé par à-coups : la
+pause serait l'état normal, pas l'exception.
 
 **Décision.** Neon Postgres.
 
@@ -150,3 +150,31 @@ l'hébergeur.
 - `sslmode=verify-full` est écrit explicitement dans les URL : `pg` traite
   aujourd'hui `require` comme `verify-full` mais s'apprête à basculer sur la
   sémantique libpq, plus permissive.
+
+---
+
+## 2026-08-14 — Classement par modèle de langage
+
+**Contexte.** Le moteur de règles échouait précisément là où le besoin est le
+plus fort : titres inexploitables, domaines inconnus, regroupements qui
+demandent de comprendre le sujet plutôt que de reconnaître un motif.
+
+**Décision.** Classement par modèle de langage, via OpenRouter.
+
+**Cadre, non négociable.** Seuls le titre et l'adresse sortent, jamais le
+contenu des pages. Rien ne part sans consentement explicite, vérifié aussi côté
+serveur. Chaque requête porte `data_collection: deny`, qui écarte du routage les
+fournisseurs s'autorisant l'entraînement sur les requêtes.
+
+**Le modèle propose, l'utilisateur arbitre.** Les affectations restent en
+attente dans `Suggestion` ; rien ne bouge avant acceptation. Un classement de
+plusieurs milliers de favoris qu'on ne peut pas relire est un classement qu'on
+ne peut pas corriger.
+
+**Alternative écartée.** L'API Google en direct : son palier gratuit se ferme
+sans prévenir, et un service qui s'interrompt sans préavis ne peut pas porter
+une fonctionnalité centrale.
+
+**Alternative écartée.** DeepSeek : serveurs en Chine, entraînement sur les
+entrées par défaut, aucune politique de rétention publiée. Incompatible avec les
+garanties données sur la page de confidentialité.

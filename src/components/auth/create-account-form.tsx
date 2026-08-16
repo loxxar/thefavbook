@@ -50,9 +50,7 @@ export function CreateAccountForm() {
           aria-invalid={errors.name !== undefined}
           {...register('name')}
         />
-        {errors.name && (
-          <FieldError>{errors.name.message ?? ''}</FieldError>
-        )}
+        {errors.name && <FieldError>{errors.name.message ?? ''}</FieldError>}
       </div>
 
       <div className="space-y-2">
@@ -64,9 +62,7 @@ export function CreateAccountForm() {
           aria-invalid={errors.email !== undefined}
           {...register('email')}
         />
-        {errors.email && (
-          <FieldError>{errors.email.message ?? ''}</FieldError>
-        )}
+        {errors.email && <FieldError>{errors.email.message ?? ''}</FieldError>}
       </div>
 
       <div className="space-y-2">
