@@ -103,26 +103,30 @@ export default async function HomePage() {
             </MacWindow>
 
             {/*
-              Plafond ici, pas sur le panneau de gauche : une longue liste de
-              propositions étirerait sinon toute la rangée et réduirait la
-              fenêtre des favoris à une bande.
+              La fenêtre est posée en absolu dans un conteneur vide : elle
+              n'impose alors aucune hauteur propre et épouse exactement celle
+              de la rangée, fixée par le panneau de gauche. Un simple plafond
+              la laissait plus courte, avec un vide sous elle ; sans plafond,
+              trois cents propositions auraient étiré toute la rangée.
             */}
-            <MacWindow
-              title="Propositions de rangement"
-              className="max-h-[420px]"
-            >
-              {pendingCount === 0 ? (
-                <p className="text-[12px] text-muted-foreground">
-                  Aucune proposition en attente. Lancez un rangement dans le
-                  panneau de gauche.
-                </p>
-              ) : (
-                <SuggestionList
-                  suggestions={suggestions}
-                  totalPending={pendingCount}
-                />
-              )}
-            </MacWindow>
+            <div className="relative min-h-[320px]">
+              <MacWindow
+                title="Propositions de rangement"
+                className="absolute inset-0"
+              >
+                {pendingCount === 0 ? (
+                  <p className="text-[12px] text-muted-foreground">
+                    Aucune proposition en attente. Lancez un rangement dans le
+                    panneau de gauche.
+                  </p>
+                ) : (
+                  <SuggestionList
+                    suggestions={suggestions}
+                    totalPending={pendingCount}
+                  />
+                )}
+              </MacWindow>
+            </div>
           </div>
         )}
 

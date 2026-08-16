@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import type { ParsedBookmark } from '@/lib/bookmarks/types'
+import type { PagePreview } from '@/lib/preview/opengraph'
 
 interface PreviewPanelProps {
   bookmark: ParsedBookmark | null
@@ -11,24 +12,68 @@ interface PreviewPanelProps {
 
 const dateFormat = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' })
 
+type LoadState =
+  | { phase: 'loading' }
+  | { phase: 'ready'; preview: PagePreview }
+  | { phase: 'failed'; message: string }
+
 /**
  * Panneau de consultation.
  *
- * POURQUOI l'aperçu intégré n'est pas affiché d'emblée : la majorité des sites
- * refusent d'être chargés dans un cadre — `X-Frame-Options` et
- * `frame-ancestors` existent pour empêcher le détournement de clic. Google
- * Docs, Drive, Cloudflare ou cPanel renverraient un rectangle blanc.
+ * L'aperçu s'appuie sur les métadonnées de partage de la page — celles que les
+ * sites publient exprès. Une capture d'écran donnerait une image plus fidèle,
+ * mais exigerait un navigateur sans interface : trois à cinq secondes et
+ * plusieurs centaines de kilo-octets par favori, pour un résultat vide sur
+ * toutes les pages derrière une connexion.
  *
- * On montre donc d'abord ce dont on est certain : les informations du favori,
- * qui viennent de la base et s'affichent toujours. L'aperçu est proposé
- * ensuite, en annonçant qu'il peut être refusé — plutôt que de laisser croire
- * à une panne.
+ * Le cadre intégré reste proposé en second recours : la plupart des sites le
+ * refusent, `X-Frame-Options` et `frame-ancestors` existant pour empêcher le
+ * détournement de clic.
  */
 export function PreviewPanel({ bookmark }: PreviewPanelProps) {
-  // L'état est remis à zéro par le `key` posé sur le composant appelant :
-  // changer de favori remonte un panneau neuf, plutôt que de corriger après
-  // coup dans un effet.
+  // L'état démarre en chargement et se réinitialise par remontage : le
+  // composant appelant pose un `key` sur l'adresse. Corriger l'état depuis
+  // l'effet reviendrait à rendre une fois pour rien.
+  const [state, setState] = useState<LoadState>({ phase: 'loading' })
   const [showFrame, setShowFrame] = useState(false)
+
+  const url = bookmark?.url ?? null
+
+  useEffect(() => {
+    if (url === null) return
+
+    const controller = new AbortController()
+
+    async function load(target: string) {
+      try {
+        const response = await fetch(
+          `/api/preview?url=${encodeURIComponent(target)}`,
+          { signal: controller.signal },
+        )
+        const payload: unknown = await response.json()
+
+        if (!response.ok) {
+          const message =
+            typeof (payload as { erreur?: unknown }).erreur === 'string'
+              ? (payload as { erreur: string }).erreur
+              : 'Aperçu indisponible.'
+          setState({ phase: 'failed', message })
+          return
+        }
+
+        setState({ phase: 'ready', preview: payload as PagePreview })
+      } catch {
+        if (!controller.signal.aborted) {
+          setState({ phase: 'failed', message: 'Aperçu indisponible.' })
+        }
+      }
+    }
+
+    void load(url)
+
+    // Changer de favori pendant le chargement annule la requête en cours.
+    return () => controller.abort()
+  }, [url])
 
   if (bookmark === null) {
     return (
@@ -39,6 +84,7 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
   }
 
   const hostname = safeHostname(bookmark.url)
+  const preview = state.phase === 'ready' ? state.preview : null
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
@@ -49,10 +95,6 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
         <p className="text-[11px] break-all text-muted-foreground">
           {bookmark.url}
         </p>
-
-        {bookmark.description !== null && bookmark.description !== '' && (
-          <p className="text-[12px]">{bookmark.description}</p>
-        )}
 
         <dl className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
           {hostname !== null && (
@@ -83,7 +125,7 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
               variant="outline"
               onClick={() => setShowFrame(true)}
             >
-              Tenter l&apos;aperçu ici
+              Tenter l&apos;aperçu intégré
             </Button>
           )}
         </div>
@@ -92,7 +134,6 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
       {showFrame ? (
         <div className="flex min-h-0 flex-1 flex-col gap-1.5">
           <iframe
-            key={bookmark.url}
             src={bookmark.url}
             title={`Aperçu de ${bookmark.title}`}
             className="min-h-0 flex-1 rounded-[6px] border border-[#b3bac6] bg-white"
@@ -101,15 +142,66 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
           />
           <p className="shrink-0 text-[11px] text-muted-foreground">
             Un cadre vide signifie que le site refuse d&apos;être affiché
-            ailleurs que chez lui. Rien n&apos;y remédie de notre côté : passez
-            par « Ouvrir dans un onglet ».
+            ailleurs que chez lui. Passez par « Ouvrir dans un onglet ».
           </p>
         </div>
       ) : (
-        <div className="min-h-0 flex-1 rounded-[6px] border border-dashed border-[#b3bac6] bg-[#f7f9fc] p-4 text-[11px] text-muted-foreground">
-          De nombreux sites — Google, les tableaux de bord d&apos;hébergeurs,
-          les espaces bancaires — interdisent leur affichage dans une autre
-          page. L&apos;aperçu reste donc à la demande.
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-[6px] border border-[#b3bac6] bg-white">
+          {state.phase === 'loading' && (
+            <div className="space-y-2 p-4">
+              <div className="aqua-progress">
+                <div className="aqua-progress-bar" />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Lecture des informations de partage…
+              </p>
+            </div>
+          )}
+
+          {state.phase === 'failed' && (
+            <p className="p-4 text-[11px] text-muted-foreground">
+              {state.message} Beaucoup de pages exigent une connexion ou
+              refusent les visiteurs automatiques.
+            </p>
+          )}
+
+          {preview !== null && (
+            <div className="space-y-2">
+              {preview.imageUrl !== null && (
+                // Image distante et arbitraire : `next/image` imposerait de
+                // déclarer chaque domaine, ce qui est impossible ici.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={preview.imageUrl}
+                  alt=""
+                  className="max-h-[240px] w-full border-b border-[#d2d9e6] object-cover"
+                  loading="lazy"
+                />
+              )}
+              <div className="space-y-1 p-3">
+                {preview.siteName !== null && (
+                  <p className="text-[11px] tracking-wide text-muted-foreground uppercase">
+                    {preview.siteName}
+                  </p>
+                )}
+                {preview.title !== null && (
+                  <p className="text-[12px] font-semibold">{preview.title}</p>
+                )}
+                {preview.description !== null && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {preview.description}
+                  </p>
+                )}
+                {preview.title === null &&
+                  preview.description === null &&
+                  preview.imageUrl === null && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Cette page ne publie aucune information de partage.
+                    </p>
+                  )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

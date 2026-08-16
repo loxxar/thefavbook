@@ -48,7 +48,7 @@ export default function ConfidentialitePage() {
               navigateur en fournit une, et les dates d&apos;ajout. Les favicons
               embarqués dans votre fichier sont lus puis jetés — ils pèsent des
               mégaoctets pour rien. Le contenu des pages n&apos;est jamais
-              visité ni enregistré.
+              enregistré.
             </Entry>
 
             <Entry question="Combien de temps ?">
@@ -78,6 +78,14 @@ export default function ConfidentialitePage() {
               qui s&apos;autorisent l&apos;entraînement sur les requêtes sont
               écartés du routage. Sans cette activation, rien ne sort de la
               base.
+            </Entry>
+
+            <Entry question="Allez-vous consulter mes pages ?">
+              Uniquement celle que vous ouvrez dans le panneau d&apos;aperçu, au
+              moment où vous cliquez dessus. Le serveur y lit les informations
+              de partage publiées par le site — titre, description, image — puis
+              les affiche et les oublie. Rien n&apos;est enregistré, et aucune
+              page n&apos;est consultée sans que vous l&apos;ayez demandé.
             </Entry>
 
             <Entry question="Suivez-vous ma navigation ?">
