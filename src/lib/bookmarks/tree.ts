@@ -59,6 +59,7 @@ export async function readBookmarkTree(
   for (const folder of folders) {
     folderNodes.set(folder.id, {
       kind: 'folder',
+      id: folder.id,
       title: folder.name,
       addDate: folder.addDate,
       lastModified: folder.lastModified,

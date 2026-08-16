@@ -29,6 +29,12 @@ export interface ParsedBookmark {
 
 export interface ParsedFolder {
   kind: 'folder'
+  /**
+   * Identifiant en base, renseigné uniquement quand l'arbre est relu depuis la
+   * base. Le parseur ne le connaît pas : à la lecture d'un fichier, le dossier
+   * n'existe pas encore.
+   */
+  id?: string
   title: string
   addDate: Date | null
   lastModified: Date | null
