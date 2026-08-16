@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 
 import { ImportForm } from '@/components/bookmarks/import-form'
 import { shouldAskForTip, TipDialog } from '@/components/bookmarks/tip-dialog'
-import { AppleMark, MenuBar, type Menu } from '@/components/mac/menu-bar'
+import { MenuBar, ProductMark, type Menu } from '@/components/mac/menu-bar'
 import { MacWindow } from '@/components/mac/mac-window'
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth/client'
@@ -57,10 +57,10 @@ export function DashboardShell({
 
   const menus: Menu[] = [
     {
-      label: 'Pomme',
-      icon: <AppleMark />,
+      label: 'thefavbook',
+      icon: <ProductMark />,
       items: [
-        { label: 'thefavbook', href: '/' },
+        { label: 'Accueil', href: '/' },
         {
           label: 'Confidentialité',
           href: '/confidentialite',

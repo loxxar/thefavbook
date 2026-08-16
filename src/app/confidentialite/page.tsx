@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { LegalNotice } from '@/components/legal-notice'
 import { MacWindow } from '@/components/mac/mac-window'
 
 export const metadata: Metadata = {
@@ -108,7 +109,9 @@ export default function ConfidentialitePage() {
             </Entry>
           </dl>
 
-          <p className="border-t border-[#d9d9d9] pt-4">
+          <LegalNotice className="border-t border-[#d9d9d9] pt-4 text-muted-foreground" />
+
+          <p>
             <Link
               href="/"
               className="text-primary underline underline-offset-2"

@@ -142,23 +142,34 @@ function MenuEntry({ item, onDone }: { item: MenuItem; onDone: () => void }) {
   )
 }
 
-/** Pomme du menu, en dégradé gris comme sous Leopard. */
-export function AppleMark() {
+/**
+ * Marque du produit, à la place de la pomme du menu d'origine.
+ *
+ * Un style visuel ne s'approprie pas, un logo si : reproduire la pomme
+ * d'Apple aurait été un emprunt de marque qu'aucune mention en pied de page
+ * ne couvre. Un ruban de signet dit ce que fait l'outil, et lui appartient.
+ *
+ * Le dégradé gris reprend celui de la barre de menus Leopard, pour que la
+ * substitution ne saute pas aux yeux.
+ */
+export function ProductMark() {
   return (
-    <svg width="13" height="15" viewBox="0 0 100 100" aria-label="Menu Pomme">
+    <svg
+      width="11"
+      height="15"
+      viewBox="0 0 22 30"
+      aria-label="Menu thefavbook"
+      role="img"
+    >
       <defs>
-        <linearGradient id="menu-apple" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="menu-mark" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#6f6f6f" />
           <stop offset="1" stopColor="#2f2f2f" />
         </linearGradient>
       </defs>
       <path
-        fill="url(#menu-apple)"
-        d="M60 18c3-6 10-9 16-8 1 7-2 13-6 17-4 5-10 8-16 7-1-7 2-12 6-16z"
-      />
-      <path
-        fill="url(#menu-apple)"
-        d="M50 30c9 0 13 5 19 5 6 0 12-5 20-4 8 1 14 6 17 13 3 8-1 20-8 29-6 8-11 12-17 12-6 0-8-4-15-4s-9 4-15 4c-6 0-12-6-17-14-9-14-11-32 1-41 6-5 12-6 15 0z"
+        fill="url(#menu-mark)"
+        d="M3 1h16a2 2 0 0 1 2 2v25a1 1 0 0 1-1.6.8L11 22.5 2.6 28.8A1 1 0 0 1 1 28V3a2 2 0 0 1 2-2Z"
       />
     </svg>
   )

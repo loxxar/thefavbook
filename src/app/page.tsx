@@ -5,6 +5,7 @@ import {
 } from '@/components/ai/suggestion-list'
 import { BookmarkBrowser } from '@/components/bookmarks/bookmark-browser'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
+import { LegalNotice } from '@/components/legal-notice'
 import { MacWindow } from '@/components/mac/mac-window'
 import { requireUser } from '@/lib/auth/session'
 import { readBookmarkTree } from '@/lib/bookmarks/tree'
@@ -144,6 +145,8 @@ export default async function HomePage() {
             <BookmarkBrowser nodes={nodes} />
           )}
         </MacWindow>
+
+        <LegalNotice className="shrink-0 px-1 pb-1 text-white/60" />
       </div>
     </DashboardShell>
   )
