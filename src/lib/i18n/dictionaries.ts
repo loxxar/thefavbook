@@ -122,12 +122,13 @@ export const fr = {
     totalBookmarks: 'Favoris',
     unchecked: 'Non vérifiés',
     brokenLinks: 'Liens morts',
+    inconclusive: 'Sans réponse claire',
     checkLinks: 'Vérifier les liens',
     checking: 'Vérification…',
     recheckAll: 'Tout revérifier',
     deleteBroken: 'Supprimer les liens morts',
     unverifiableNote:
-      'Les adresses hors de portée — chrome://, réseau local — ne comptent pas comme mortes et ne sont jamais supprimées : le serveur ne peut pas les joindre, ce qui ne dit rien de leur validité.',
+      "Seuls les 404 et 410 comptent comme morts : le serveur y déclare lui-même que la page n'existe plus. Un accès refusé, un quota atteint, une panne ou une adresse hors de portée sont signalés sans jamais être supprimés — le site est vivant, il refuse seulement de répondre à un robot.",
     checkDone: 'Vérification terminée.',
     duplicateSummary: (groups: number, shown: number, removable: number) =>
       `${groups} adresse${groups > 1 ? 's' : ''} en double. ${shown} affichée${shown > 1 ? 's' : ''} ici, ${removable} favori${removable > 1 ? 's' : ''} supprimable${removable > 1 ? 's' : ''}.`,
@@ -272,12 +273,13 @@ export const en: Dictionary = {
     totalBookmarks: 'Bookmarks',
     unchecked: 'Unchecked',
     brokenLinks: 'Dead links',
+    inconclusive: 'No clear answer',
     checkLinks: 'Check links',
     checking: 'Checking…',
     recheckAll: 'Recheck everything',
     deleteBroken: 'Delete dead links',
     unverifiableNote:
-      'Out-of-reach addresses — chrome://, local network — do not count as dead and are never deleted: the server cannot reach them, which says nothing about their validity.',
+      'Only 404 and 410 count as dead: there the server itself states the page is gone. A refused access, a spent quota, an outage or an out-of-reach address are flagged but never deleted — the site is alive, it simply will not answer a robot.',
     checkDone: 'Checking finished.',
     duplicateSummary: (groups: number, shown: number, removable: number) =>
       `${groups} duplicated address${groups > 1 ? 'es' : ''}. ${shown} shown here, ${removable} bookmark${removable > 1 ? 's' : ''} removable.`,
@@ -406,12 +408,13 @@ export const de: Dictionary = {
     totalBookmarks: 'Lesezeichen',
     unchecked: 'Ungeprüft',
     brokenLinks: 'Tote Links',
+    inconclusive: 'Ohne klare Antwort',
     checkLinks: 'Links prüfen',
     checking: 'Prüfung…',
     recheckAll: 'Alles erneut prüfen',
     deleteBroken: 'Tote Links löschen',
     unverifiableNote:
-      'Nicht erreichbare Adressen — chrome://, lokales Netz — gelten nicht als tot und werden nie gelöscht: der Server kann sie nicht erreichen, was nichts über ihre Gültigkeit aussagt.',
+      'Nur 404 und 410 gelten als tot: dort erklärt der Server selbst, dass die Seite nicht mehr existiert. Verweigerter Zugriff, erschöpftes Kontingent, Ausfall oder nicht erreichbare Adresse werden gemeldet, aber nie gelöscht — die Seite lebt, sie antwortet nur keinem Roboter.',
     checkDone: 'Prüfung abgeschlossen.',
     duplicateSummary: (groups: number, shown: number, removable: number) =>
       `${groups} doppelte Adresse${groups > 1 ? 'n' : ''}. ${shown} hier angezeigt, ${removable} Lesezeichen entfernbar.`,
@@ -541,12 +544,13 @@ export const es: Dictionary = {
     totalBookmarks: 'Favoritos',
     unchecked: 'Sin verificar',
     brokenLinks: 'Enlaces rotos',
+    inconclusive: 'Sin respuesta clara',
     checkLinks: 'Verificar los enlaces',
     checking: 'Verificando…',
     recheckAll: 'Verificar todo de nuevo',
     deleteBroken: 'Eliminar los enlaces rotos',
     unverifiableNote:
-      'Las direcciones fuera de alcance — chrome://, red local — no cuentan como rotas y nunca se eliminan: el servidor no puede alcanzarlas, lo que no dice nada sobre su validez.',
+      'Solo los 404 y 410 cuentan como rotos: ahí el propio servidor declara que la página ya no existe. Un acceso denegado, una cuota agotada, una avería o una dirección fuera de alcance se señalan pero nunca se eliminan — el sitio está vivo, solo se niega a responder a un robot.',
     checkDone: 'Verificación terminada.',
     duplicateSummary: (groups: number, shown: number, removable: number) =>
       `${groups} dirección${groups > 1 ? 'es' : ''} duplicada${groups > 1 ? 's' : ''}. ${shown} mostrada${shown > 1 ? 's' : ''} aquí, ${removable} favorito${removable > 1 ? 's' : ''} eliminable${removable > 1 ? 's' : ''}.`,

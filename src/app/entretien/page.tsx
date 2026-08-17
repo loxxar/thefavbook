@@ -6,6 +6,7 @@ import { LinkCheckPanel } from '@/components/bookmarks/link-check-panel'
 import { MacWindow } from '@/components/mac/mac-window'
 import { requireUser } from '@/lib/auth/session'
 import { findDuplicateGroups } from '@/lib/bookmarks/duplicates'
+import { BROKEN_WHERE, STATUS_UNVERIFIABLE } from '@/lib/bookmarks/link-check'
 import { getPrisma } from '@/lib/db'
 import { getTranslations } from '@/lib/i18n/server'
 import { resolveSpaceId } from '@/lib/spaces/current'
@@ -33,56 +34,81 @@ export default async function EntretienPage({
     typeof requested === 'string' ? requested : undefined,
   )
 
-  const [{ groups, totalGroups }, totalCount, uncheckedCount, brokenCount] =
-    await Promise.all([
-      findDuplicateGroups(prisma, user.id, spaceId),
-      prisma.bookmark.count({ where: { userId: user.id, spaceId } }),
-      prisma.bookmark.count({
-        where: { userId: user.id, spaceId, checkedAt: null },
-      }),
-      prisma.bookmark.count({
-        where: {
-          userId: user.id,
-          spaceId,
-          OR: [{ checkStatus: 0 }, { checkStatus: { gte: 400 } }],
-        },
-      }),
-    ])
+  const [
+    { groups, totalGroups },
+    totalCount,
+    uncheckedCount,
+    brokenCount,
+    inconclusiveCount,
+  ] = await Promise.all([
+    findDuplicateGroups(prisma, user.id, spaceId),
+    prisma.bookmark.count({ where: { userId: user.id, spaceId } }),
+    prisma.bookmark.count({
+      where: { userId: user.id, spaceId, checkedAt: null },
+    }),
+    prisma.bookmark.count({
+      where: { userId: user.id, spaceId, ...BROKEN_WHERE },
+    }),
+    prisma.bookmark.count({
+      where: {
+        userId: user.id,
+        spaceId,
+        NOT: BROKEN_WHERE,
+        OR: [
+          { checkStatus: 0 },
+          { checkStatus: STATUS_UNVERIFIABLE },
+          { checkStatus: { gte: 400 } },
+        ],
+      },
+    }),
+  ])
 
   return (
-    <div className="aqua-desktop flex h-dvh flex-col gap-3 p-3">
-      <MacWindow title={t.maintenance.linkCheckTitle} className="shrink-0">
-        <div className="mb-3 shrink-0 text-[12px]">
-          <Link
-            href={`/?espace=${encodeURIComponent(spaceId)}`}
-            className="text-primary underline underline-offset-2"
-          >
-            {t.maintenance.backToBookmarks}
-          </Link>
-        </div>
+    <div className="aqua-desktop flex h-dvh flex-col gap-2 p-3">
+      <div className="shrink-0 text-[12px]">
+        <Link
+          href={`/?espace=${encodeURIComponent(spaceId)}`}
+          className="text-white/80 underline underline-offset-2 hover:text-white"
+        >
+          {t.maintenance.backToBookmarks}
+        </Link>
+      </div>
 
-        <LinkCheckPanel
-          spaceId={spaceId}
-          totalCount={totalCount}
-          uncheckedCount={uncheckedCount}
-          brokenCount={brokenCount}
-        />
-      </MacWindow>
+      {/*
+        Côte à côte plutôt qu'empilées : le contenu de chaque panneau est étroit
+        et haut. Sur toute la largeur, la moitié droite restait vide et il
+        fallait défiler la page entière pour passer d'un panneau à l'autre.
+        Chacun défile désormais chez lui, et les deux tiennent à l'écran.
+      */}
+      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-2">
+        <MacWindow
+          title={t.maintenance.linkCheckTitle}
+          className="min-h-0 max-lg:min-h-[320px]"
+        >
+          <LinkCheckPanel
+            spaceId={spaceId}
+            totalCount={totalCount}
+            uncheckedCount={uncheckedCount}
+            brokenCount={brokenCount}
+            inconclusiveCount={inconclusiveCount}
+          />
+        </MacWindow>
 
-      <MacWindow
-        title={t.maintenance.duplicatesTitle}
-        className="min-h-0 flex-1"
-      >
-        <p className="mb-3 shrink-0 text-[11px] text-muted-foreground">
-          {t.maintenance.duplicatesRule}
-        </p>
+        <MacWindow
+          title={t.maintenance.duplicatesTitle}
+          className="min-h-0 max-lg:min-h-[320px]"
+        >
+          <p className="mb-2 shrink-0 text-[11px] text-muted-foreground">
+            {t.maintenance.duplicatesRule}
+          </p>
 
-        <DuplicateList
-          groups={groups}
-          totalGroups={totalGroups}
-          spaceId={spaceId}
-        />
-      </MacWindow>
+          <DuplicateList
+            groups={groups}
+            totalGroups={totalGroups}
+            spaceId={spaceId}
+          />
+        </MacWindow>
+      </div>
     </div>
   )
 }

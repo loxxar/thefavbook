@@ -78,19 +78,53 @@ export async function checkLink(rawUrl: string): Promise<LinkStatus> {
 
   return {
     status: response.status,
-    redirectsTo:
-      final !== '' && final !== target.toString() ? final : null,
+    redirectsTo: final !== '' && final !== target.toString() ? final : null,
   }
 }
 
 /**
- * Un lien est jugé sain tant que le serveur ne dit pas le contraire.
+ * Les deux seuls codes par lesquels un serveur déclare qu'une page n'existe
+ * pas : 404 introuvable, 410 retirée définitivement.
  *
- * Les adresses hors de portée ne comptent pas comme mortes : on n'en sait
- * rien, et supprimer sur une ignorance serait pire que ne rien faire.
+ * POURQUOI pas tout le 4xx : un 401, un 403 ou un 429 disent « je ne te
+ * réponds pas à toi » — le site est vivant, il refuse un robot. Cloudflare et
+ * les murs de connexion en produisent en masse. Les traiter comme des liens
+ * morts faisait proposer la suppression de favoris parfaitement valides, à
+ * hauteur de douze sur quatorze sur une collection réelle.
+ *
+ * POURQUOI pas le 5xx : une panne se répare. Un lien n'est pas mort parce que
+ * son serveur a hoqueté pendant la vérification.
+ */
+const BROKEN_STATUSES = [404, 410]
+
+/**
+ * Filtre Prisma des favoris réellement morts.
+ *
+ * Partagé par le comptage et par la suppression : les voir diverger ferait
+ * effacer autre chose que ce qui était annoncé.
+ */
+export const BROKEN_WHERE = { checkStatus: { in: BROKEN_STATUSES } }
+
+/**
+ * Un lien n'est mort que si le serveur l'a dit lui-même.
+ *
+ * Tout le reste — hors de portée, muet, bloqué, en panne — relève de
+ * l'ignorance, et supprimer sur une ignorance serait pire que ne rien faire.
  */
 export function isBroken(status: number | null): boolean {
-  if (status === null || status === STATUS_UNVERIFIABLE) return false
+  if (status === null) return false
 
-  return status === 0 || status >= 400
+  return BROKEN_STATUSES.includes(status)
+}
+
+/**
+ * Le serveur a répondu, mais rien n'a pu être conclu : accès refusé, quota
+ * atteint, panne, silence, ou adresse hors de portée.
+ *
+ * Signalé à l'utilisateur sans jamais être proposé à la suppression.
+ */
+export function isInconclusive(status: number | null): boolean {
+  if (status === null || isBroken(status)) return false
+
+  return status === STATUS_UNVERIFIABLE || status === 0 || status >= 400
 }

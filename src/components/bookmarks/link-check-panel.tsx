@@ -19,6 +19,7 @@ interface LinkCheckPanelProps {
   spaceId: string
   uncheckedCount: number
   brokenCount: number
+  inconclusiveCount: number
   totalCount: number
 }
 
@@ -37,6 +38,7 @@ export function LinkCheckPanel({
   spaceId,
   uncheckedCount,
   brokenCount,
+  inconclusiveCount,
   totalCount,
 }: LinkCheckPanelProps) {
   const { t } = useTranslations()
@@ -44,6 +46,7 @@ export function LinkCheckPanel({
   const [isPending, startTransition] = useTransition()
   const [remaining, setRemaining] = useState<number | null>(null)
   const [broken, setBroken] = useState(brokenCount)
+  const [inconclusive, setInconclusive] = useState(inconclusiveCount)
   const [log, setLog] = useState<CheckedSample[]>([])
 
   const done = remaining === null ? 0 : uncheckedCount - remaining
@@ -64,6 +67,7 @@ export function LinkCheckPanel({
 
       setRemaining(result.remaining)
       setBroken(result.broken)
+      setInconclusive(result.inconclusive)
 
       if (result.samples.length > 0) {
         setLog((previous) => [...result.samples, ...previous].slice(0, 40))
@@ -89,6 +93,7 @@ export function LinkCheckPanel({
           value={String(remaining ?? uncheckedCount)}
         />
         <Stat label={t.maintenance.brokenLinks} value={String(broken)} />
+        <Stat label={t.maintenance.inconclusive} value={String(inconclusive)} />
       </dl>
 
       {isRunning && (
@@ -168,8 +173,14 @@ export function LinkCheckPanel({
         <ul className="min-h-0 flex-1 space-y-0.5 overflow-y-auto rounded-[6px] border border-[#d2d9e6] p-2 text-[11px]">
           {log.map((entry, index) => (
             <li key={`${entry.title}-${index}`} className="flex gap-2 truncate">
-              <span className="w-8 shrink-0 text-destructive tabular-nums">
-                {entry.status === 0 ? '—' : entry.status}
+              <span
+                className={`w-8 shrink-0 tabular-nums ${
+                  entry.kind === 'broken'
+                    ? 'text-destructive'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {entry.status <= 0 ? '—' : entry.status}
               </span>
               <span className="truncate">{entry.title}</span>
             </li>

@@ -9,6 +9,8 @@
 export interface CheckedSample {
   title: string
   status: number
+  /** Mort avéré, ou seulement invérifiable : la nuance décide du sort. */
+  kind: 'broken' | 'inconclusive'
 }
 
 export interface CheckBatchResult {
@@ -17,6 +19,8 @@ export interface CheckBatchResult {
   checked: number
   remaining: number
   broken: number
+  /** Liens sur lesquels rien n'a pu être conclu : bloqués, muets, en panne. */
+  inconclusive: number
   samples: CheckedSample[]
 }
 

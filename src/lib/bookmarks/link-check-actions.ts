@@ -3,7 +3,14 @@
 import { revalidatePath } from 'next/cache'
 
 import { requireUser } from '@/lib/auth/session'
-import { CHECK_BATCH_SIZE, checkLink, isBroken } from '@/lib/bookmarks/link-check'
+import {
+  BROKEN_WHERE,
+  CHECK_BATCH_SIZE,
+  checkLink,
+  isBroken,
+  isInconclusive,
+  STATUS_UNVERIFIABLE,
+} from '@/lib/bookmarks/link-check'
 import type { CheckBatchResult } from '@/lib/bookmarks/link-check-state'
 import { getPrisma } from '@/lib/db'
 
@@ -34,6 +41,7 @@ export async function checkNextLinksAction(
       checked: 0,
       remaining: 0,
       broken: 0,
+      inconclusive: 0,
       samples: [],
     }
   }
@@ -59,15 +67,23 @@ export async function checkNextLinksAction(
     ),
   )
 
-  const [remaining, broken] = await Promise.all([
+  const [remaining, broken, inconclusive] = await Promise.all([
     prisma.bookmark.count({
       where: { userId: user.id, spaceId, checkedAt: null },
+    }),
+    prisma.bookmark.count({
+      where: { userId: user.id, spaceId, ...BROKEN_WHERE },
     }),
     prisma.bookmark.count({
       where: {
         userId: user.id,
         spaceId,
-        OR: [{ checkStatus: 0 }, { checkStatus: { gte: 400 } }],
+        NOT: BROKEN_WHERE,
+        OR: [
+          { checkStatus: 0 },
+          { checkStatus: STATUS_UNVERIFIABLE },
+          { checkStatus: { gte: 400 } },
+        ],
       },
     }),
   ])
@@ -80,11 +96,21 @@ export async function checkNextLinksAction(
     checked: results.length,
     remaining,
     broken,
+    inconclusive,
+    // Les invérifiables figurent au journal sans jamais rejoindre le décompte
+    // des morts : l'utilisateur voit ce qui a résisté, sans qu'on le lui
+    // propose à la suppression.
     samples: results
-      .filter(({ result }) => isBroken(result.status))
+      .filter(
+        ({ result }) =>
+          isBroken(result.status) || isInconclusive(result.status),
+      )
       .map(({ bookmark, result }) => ({
         title: bookmark.title === '' ? bookmark.url : bookmark.title,
         status: result.status,
+        kind: isBroken(result.status)
+          ? ('broken' as const)
+          : ('inconclusive' as const),
       })),
   }
 }
@@ -106,9 +132,10 @@ export async function resetLinkChecksAction(spaceId: string): Promise<number> {
 /**
  * Supprime les favoris dont le lien est mort, après validation explicite.
  *
- * Les adresses hors de portée — `chrome://`, réseau local — sont épargnées :
- * leur statut ne dit pas qu'elles sont mortes, seulement qu'on n'a pas pu
- * les joindre depuis le serveur.
+ * Ne partent que les 404 et 410, seuls codes par lesquels un serveur déclare
+ * qu'une page n'existe plus. Un accès refusé, un quota atteint, une panne ou
+ * une adresse hors de portée sont épargnés : ils ne disent rien de la validité
+ * du favori.
  */
 export async function deleteBrokenLinksAction(
   spaceId: string,
@@ -116,11 +143,7 @@ export async function deleteBrokenLinksAction(
   const user = await requireUser()
 
   const { count } = await getPrisma().bookmark.deleteMany({
-    where: {
-      userId: user.id,
-      spaceId,
-      OR: [{ checkStatus: 0 }, { checkStatus: { gte: 400 } }],
-    },
+    where: { userId: user.id, spaceId, ...BROKEN_WHERE },
   })
 
   revalidatePath('/')
