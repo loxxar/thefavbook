@@ -4,7 +4,10 @@ import { useRouter } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
+import { ClassifyPanel } from '@/components/ai/classify-panel'
 import { ImportForm } from '@/components/bookmarks/import-form'
+import { Workspace } from '@/components/workspace/workspace'
+import type { WorkspaceData } from '@/lib/bookmarks/rows'
 import { useTranslations } from '@/components/i18n/translations-provider'
 import { shouldAskForTip, TipDialog } from '@/components/bookmarks/tip-dialog'
 import { MenuBar, ProductMark, type Menu } from '@/components/mac/menu-bar'
@@ -29,7 +32,10 @@ interface DashboardShellProps {
   supporterCount: number
   spaces: SpaceSummary[]
   currentSpaceId: string
-  children: ReactNode
+  data: WorkspaceData
+  hasConsent: boolean
+  unclassifiedCount: number
+  pendingCount: number
 }
 
 /**
@@ -46,11 +52,15 @@ export function DashboardShell({
   supporterCount,
   spaces,
   currentSpaceId,
-  children,
+  data,
+  hasConsent,
+  unclassifiedCount,
+  pendingCount,
 }: DashboardShellProps) {
   const router = useRouter()
   const { t, locale } = useTranslations()
   const [isImporting, setIsImporting] = useState(false)
+  const [isClassifying, setIsClassifying] = useState(false)
   const [isTipping, setIsTipping] = useState(false)
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
 
@@ -167,7 +177,12 @@ export function DashboardShell({
       label: t.menu.tools,
       items: [
         {
+          label: t.dashboard.sortWithAi,
+          onSelect: () => setIsClassifying(true),
+        },
+        {
           label: t.menu.maintenance,
+          separatorBefore: true,
           href: `/entretien?espace=${encodeURIComponent(currentSpaceId)}`,
         },
       ],
@@ -239,7 +254,30 @@ export function DashboardShell({
         }
       />
 
-      {children}
+      <Workspace
+        data={data}
+        spaceId={currentSpaceId}
+        spaceName={currentSpace?.name ?? 'thefavbook'}
+        locale={locale}
+        onImport={() => setIsImporting(true)}
+        onExport={exportBookmarks}
+        onClassify={() => setIsClassifying(true)}
+        canExport={hasBookmarks}
+      />
+
+      {isClassifying && (
+        <Modal
+          title={t.dashboard.sortWithAi}
+          onClose={() => setIsClassifying(false)}
+        >
+          <ClassifyPanel
+            hasConsent={hasConsent}
+            unclassifiedCount={unclassifiedCount}
+            pendingCount={pendingCount}
+            spaceId={currentSpaceId}
+          />
+        </Modal>
+      )}
 
       {isImporting && (
         <Modal title={t.importer.title} onClose={() => setIsImporting(false)}>
