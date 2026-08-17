@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react'
 
+import { useTranslations } from '@/components/i18n/translations-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +15,7 @@ interface ImportFormProps {
 }
 
 export function ImportForm({ spaceId }: ImportFormProps) {
+  const { t } = useTranslations()
   const [state, formAction, isPending] = useActionState(
     importBookmarksAction,
     INITIAL_IMPORT_STATE,
@@ -24,7 +26,7 @@ export function ImportForm({ spaceId }: ImportFormProps) {
       <input type="hidden" name="spaceId" value={spaceId} />
       <div className="space-y-1.5">
         <Label htmlFor="files" className="text-[12px] font-semibold">
-          Fichiers de favoris
+          {t.importer.files}
         </Label>
         <Input
           id="files"
@@ -36,25 +38,25 @@ export function ImportForm({ spaceId }: ImportFormProps) {
           className="h-auto py-1 file:mr-2 file:rounded-[10px] file:border file:border-[#9a9a9a] file:bg-[linear-gradient(to_bottom,#ffffff,#e3e3e3)] file:px-2 file:py-0.5 file:text-[11px]"
         />
         <p className="text-[11px] text-muted-foreground">
-          Export Chrome, Firefox, Safari ou Edge. Plusieurs fichiers à la fois
-          sont fusionnés.
+          {t.importer.filesHint}
         </p>
       </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="sourceLabel" className="text-[12px] font-semibold">
-          Provenance <span className="font-normal">(facultatif)</span>
+          {t.importer.source}{' '}
+          <span className="font-normal">{t.importer.optional}</span>
         </Label>
         <Input
           id="sourceLabel"
           name="sourceLabel"
           maxLength={80}
-          placeholder="Chrome perso"
+          placeholder={t.importer.sourcePlaceholder}
         />
       </div>
 
       <Button type="submit" disabled={isPending}>
-        {isPending ? 'Import en cours…' : 'Importer'}
+        {isPending ? t.importer.submitting : t.importer.submit}
       </Button>
 
       {isPending && (
@@ -67,8 +69,7 @@ export function ImportForm({ spaceId }: ImportFormProps) {
             <div className="aqua-progress-bar" />
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Lecture du fichier, analyse et écriture en base. Sur plusieurs
-            milliers de favoris, comptez une poignée de secondes.
+            {t.importer.progress}
           </p>
         </div>
       )}

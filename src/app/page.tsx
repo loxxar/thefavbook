@@ -11,6 +11,7 @@ import { requireUser } from '@/lib/auth/session'
 import { readBookmarkTree } from '@/lib/bookmarks/tree'
 import { countBookmarks } from '@/lib/bookmarks/types'
 import { getPrisma } from '@/lib/db'
+import { getTranslations } from '@/lib/i18n/server'
 import { listSpaces, resolveSpaceId } from '@/lib/spaces/current'
 import { countSupporters } from '@/lib/support/count'
 
@@ -20,6 +21,7 @@ const TRIAGE_PAGE_SIZE = 50
 export default async function HomePage({ searchParams }: PageProps<'/'>) {
   const user = await requireUser()
   const prisma = getPrisma()
+  const t = await getTranslations()
 
   const requested = (await searchParams).espace
   const spaceId = await resolveSpaceId(
@@ -97,7 +99,7 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
         */}
         {bookmarkCount > 0 && (
           <div className="grid shrink-0 gap-3 lg:grid-cols-2">
-            <MacWindow title="Ranger avec l’IA">
+            <MacWindow title={t.dashboard.sortWithAi}>
               <ClassifyPanel
                 hasConsent={account?.aiConsentAt != null}
                 unclassifiedCount={unclassifiedCount}
@@ -113,13 +115,12 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
             */}
             <div className="relative min-h-[320px]">
               <MacWindow
-                title="Propositions de rangement"
+                title={t.dashboard.suggestions}
                 className="absolute inset-0"
               >
                 {pendingCount === 0 ? (
                   <p className="text-[12px] text-muted-foreground">
-                    Aucune proposition en attente. Lancez un rangement dans le
-                    panneau de gauche.
+                    {t.dashboard.noSuggestions}
                   </p>
                 ) : (
                   <SuggestionList
@@ -133,14 +134,13 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
         )}
 
         <MacWindow
-          title="Mes favoris"
-          status={`${bookmarkCount} favori${bookmarkCount > 1 ? 's' : ''}, ${folderCount} dossier${folderCount > 1 ? 's' : ''}`}
+          title={t.dashboard.bookmarks}
+          status={t.dashboard.counts(bookmarkCount, folderCount)}
           className="min-h-[320px] flex-1"
         >
           {bookmarkCount === 0 ? (
             <p className="rounded-[6px] border border-dashed border-[#b3bac6] bg-[#f7f9fc] p-4 text-[12px] text-muted-foreground">
-              Cet espace est vide. Ouvrez le menu Fichier puis « Importer des
-              favoris » pour y déposer un export de navigateur.
+              {t.dashboard.emptySpace}
             </p>
           ) : (
             <BookmarkBrowser nodes={nodes} spaceId={spaceId} />

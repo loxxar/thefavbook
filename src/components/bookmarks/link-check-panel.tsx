@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
+import { useTranslations } from '@/components/i18n/translations-provider'
 import { Button } from '@/components/ui/button'
 import {
   checkNextLinksAction,
@@ -38,6 +39,7 @@ export function LinkCheckPanel({
   brokenCount,
   totalCount,
 }: LinkCheckPanelProps) {
+  const { t } = useTranslations()
   const [isRunning, setIsRunning] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [remaining, setRemaining] = useState<number | null>(null)
@@ -68,7 +70,7 @@ export function LinkCheckPanel({
       }
 
       if (result.status === 'done') {
-        toast.success('Vérification terminée.')
+        toast.success(t.maintenance.checkDone)
         break
       }
 
@@ -81,12 +83,12 @@ export function LinkCheckPanel({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 text-[12px]">
       <dl className="flex shrink-0 flex-wrap gap-x-5 gap-y-1 text-[11px]">
-        <Stat label="Favoris" value={String(totalCount)} />
+        <Stat label={t.maintenance.totalBookmarks} value={String(totalCount)} />
         <Stat
-          label="Non vérifiés"
+          label={t.maintenance.unchecked}
           value={String(remaining ?? uncheckedCount)}
         />
-        <Stat label="Liens morts" value={String(broken)} />
+        <Stat label={t.maintenance.brokenLinks} value={String(broken)} />
       </dl>
 
       {isRunning && (
@@ -105,7 +107,7 @@ export function LinkCheckPanel({
             />
           </div>
           <p className="text-[11px] text-muted-foreground">
-            {done} sur {uncheckedCount} vérifiés.
+            {t.maintenance.checkProgress(done, uncheckedCount)}
           </p>
         </div>
       )}
@@ -118,7 +120,7 @@ export function LinkCheckPanel({
           }
           onClick={run}
         >
-          {isRunning ? 'Vérification…' : 'Vérifier les liens'}
+          {isRunning ? t.maintenance.checking : t.maintenance.checkLinks}
         </Button>
 
         <Button
@@ -129,11 +131,11 @@ export function LinkCheckPanel({
             startTransition(async () => {
               const count = await resetLinkChecksAction(spaceId)
               setRemaining(null)
-              toast.success(`${count} liens à revérifier.`)
+              toast.success(t.maintenance.recheckQueued(count))
             })
           }
         >
-          Tout revérifier
+          {t.maintenance.recheckAll}
         </Button>
 
         <Button
@@ -143,25 +145,23 @@ export function LinkCheckPanel({
           onClick={() =>
             startTransition(async () => {
               const confirmed = confirm(
-                `Supprimer les ${broken} favoris dont le lien est mort ? Cette action est irréversible.`,
+                t.maintenance.confirmDeleteBroken(broken),
               )
 
               if (!confirmed) return
 
               const count = await deleteBrokenLinksAction(spaceId)
               setBroken(0)
-              toast.success(`${count} favoris supprimés.`)
+              toast.success(t.maintenance.removed(count))
             })
           }
         >
-          Supprimer les liens morts
+          {t.maintenance.deleteBroken}
         </Button>
       </div>
 
       <p className="shrink-0 text-[11px] text-muted-foreground">
-        Les adresses hors de portée — <code>chrome://</code>, réseau local — ne
-        comptent pas comme mortes et ne sont jamais supprimées : le serveur ne
-        peut pas les joindre, ce qui ne dit rien de leur validité.
+        {t.maintenance.unverifiableNote}
       </p>
 
       {log.length > 0 && (

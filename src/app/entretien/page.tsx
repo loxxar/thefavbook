@@ -7,10 +7,11 @@ import { MacWindow } from '@/components/mac/mac-window'
 import { requireUser } from '@/lib/auth/session'
 import { findDuplicateGroups } from '@/lib/bookmarks/duplicates'
 import { getPrisma } from '@/lib/db'
+import { getTranslations } from '@/lib/i18n/server'
 import { resolveSpaceId } from '@/lib/spaces/current'
 
 export const metadata: Metadata = {
-  title: 'Entretien — thefavbook',
+  title: 'thefavbook',
 }
 
 /**
@@ -23,6 +24,7 @@ export default async function EntretienPage({
 }: PageProps<'/entretien'>) {
   const user = await requireUser()
   const prisma = getPrisma()
+  const t = await getTranslations()
 
   const requested = (await searchParams).espace
   const spaceId = await resolveSpaceId(
@@ -49,13 +51,13 @@ export default async function EntretienPage({
 
   return (
     <div className="aqua-desktop flex h-dvh flex-col gap-3 p-3">
-      <MacWindow title="Vérification des liens" className="shrink-0">
+      <MacWindow title={t.maintenance.linkCheckTitle} className="shrink-0">
         <div className="mb-3 shrink-0 text-[12px]">
           <Link
             href={`/?espace=${encodeURIComponent(spaceId)}`}
             className="text-primary underline underline-offset-2"
           >
-            ← Retour aux favoris
+            {t.maintenance.backToBookmarks}
           </Link>
         </div>
 
@@ -67,11 +69,12 @@ export default async function EntretienPage({
         />
       </MacWindow>
 
-      <MacWindow title="Doublons" className="min-h-0 flex-1">
+      <MacWindow
+        title={t.maintenance.duplicatesTitle}
+        className="min-h-0 flex-1"
+      >
         <p className="mb-3 shrink-0 text-[11px] text-muted-foreground">
-          Deux adresses sont considérées identiques quand elles ne diffèrent que
-          par le protocole, le <code>www</code>, un slash final ou des
-          paramètres de suivi. Ce qui distingue deux pages réelles est conservé.
+          {t.maintenance.duplicatesRule}
         </p>
 
         <DuplicateList

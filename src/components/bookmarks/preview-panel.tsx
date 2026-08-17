@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
+import { useTranslations } from '@/components/i18n/translations-provider'
 import { Button } from '@/components/ui/button'
 import type { ParsedBookmark } from '@/lib/bookmarks/types'
 import type { PagePreview } from '@/lib/preview/opengraph'
@@ -9,8 +10,6 @@ import type { PagePreview } from '@/lib/preview/opengraph'
 interface PreviewPanelProps {
   bookmark: ParsedBookmark | null
 }
-
-const dateFormat = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' })
 
 type LoadState =
   | { phase: 'loading' }
@@ -31,6 +30,7 @@ type LoadState =
  * détournement de clic.
  */
 export function PreviewPanel({ bookmark }: PreviewPanelProps) {
+  const { t, locale } = useTranslations()
   // L'état démarre en chargement et se réinitialise par remontage : le
   // composant appelant pose un `key` sur l'adresse. Corriger l'état depuis
   // l'effet reviendrait à rendre une fois pour rien.
@@ -38,6 +38,10 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
   const [showFrame, setShowFrame] = useState(false)
 
   const url = bookmark?.url ?? null
+  const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'long' })
+  // Extrait avant l'effet : le dictionnaire entier comme dépendance
+  // relancerait la requête à chaque rendu.
+  const unavailable = t.preview.noMetadata
 
   useEffect(() => {
     if (url === null) return
@@ -56,7 +60,7 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
           const message =
             typeof (payload as { erreur?: unknown }).erreur === 'string'
               ? (payload as { erreur: string }).erreur
-              : 'Aperçu indisponible.'
+              : unavailable
           setState({ phase: 'failed', message })
           return
         }
@@ -64,7 +68,7 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
         setState({ phase: 'ready', preview: payload as PagePreview })
       } catch {
         if (!controller.signal.aborted) {
-          setState({ phase: 'failed', message: 'Aperçu indisponible.' })
+          setState({ phase: 'failed', message: unavailable })
         }
       }
     }
@@ -73,12 +77,12 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
 
     // Changer de favori pendant le chargement annule la requête en cours.
     return () => controller.abort()
-  }, [url])
+  }, [url, unavailable])
 
   if (bookmark === null) {
     return (
       <div className="flex h-full items-center justify-center rounded-[6px] border border-dashed border-[#b3bac6] bg-[#f7f9fc] p-6 text-center text-[12px] text-muted-foreground">
-        Sélectionnez un favori pour l&apos;examiner sans quitter la page.
+        {t.preview.empty}
       </div>
     )
   }
@@ -99,13 +103,13 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
         <dl className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
           {hostname !== null && (
             <div className="flex gap-1">
-              <dt>Domaine :</dt>
+              <dt>{t.preview.domain}</dt>
               <dd className="text-foreground">{hostname}</dd>
             </div>
           )}
           {bookmark.addDate !== null && (
             <div className="flex gap-1">
-              <dt>Ajouté le :</dt>
+              <dt>{t.preview.addedOn}</dt>
               <dd className="text-foreground">
                 {dateFormat.format(bookmark.addDate)}
               </dd>
@@ -116,7 +120,7 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
         <div className="flex flex-wrap gap-2 pt-1">
           <Button size="sm" asChild>
             <a href={bookmark.url} target="_blank" rel="noreferrer noopener">
-              Ouvrir dans un onglet
+              {t.preview.openInTab}
             </a>
           </Button>
           {!showFrame && (
@@ -125,7 +129,7 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
               variant="outline"
               onClick={() => setShowFrame(true)}
             >
-              Tenter l&apos;aperçu intégré
+              {t.preview.tryEmbed}
             </Button>
           )}
         </div>
@@ -141,8 +145,7 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
             referrerPolicy="no-referrer"
           />
           <p className="shrink-0 text-[11px] text-muted-foreground">
-            Un cadre vide signifie que le site refuse d&apos;être affiché
-            ailleurs que chez lui. Passez par « Ouvrir dans un onglet ».
+            {t.preview.embedRefused}
           </p>
         </div>
       ) : (
@@ -153,15 +156,14 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
                 <div className="aqua-progress-bar" />
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Lecture des informations de partage…
+                {t.preview.loading}
               </p>
             </div>
           )}
 
           {state.phase === 'failed' && (
             <p className="p-4 text-[11px] text-muted-foreground">
-              {state.message} Beaucoup de pages exigent une connexion ou
-              refusent les visiteurs automatiques.
+              {state.message} {t.preview.failedSuffix}
             </p>
           )}
 
@@ -196,7 +198,7 @@ export function PreviewPanel({ bookmark }: PreviewPanelProps) {
                   preview.description === null &&
                   preview.imageUrl === null && (
                     <p className="text-[11px] text-muted-foreground">
-                      Cette page ne publie aucune information de partage.
+                      {t.preview.noMetadata}
                     </p>
                   )}
               </div>

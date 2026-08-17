@@ -5,7 +5,7 @@ import { LegalNotice } from '@/components/legal-notice'
 import { MacWindow } from '@/components/mac/mac-window'
 
 export const metadata: Metadata = {
-  title: 'Connexion — thefavbook',
+  title: 'thefavbook',
 }
 
 export default function ConnexionPage() {

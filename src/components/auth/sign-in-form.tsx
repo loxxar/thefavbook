@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
+import { useTranslations } from '@/components/i18n/translations-provider'
 import { FieldError } from '@/components/mac/field-error'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +15,7 @@ import { signInSchema, type SignInInput } from '@/lib/auth/schemas'
 
 export function SignInForm() {
   const router = useRouter()
+  const { t } = useTranslations()
   const {
     register,
     handleSubmit,
@@ -29,7 +31,7 @@ export function SignInForm() {
     if (error) {
       // Message volontairement identique pour un e-mail inconnu et un mot de
       // passe faux : distinguer les deux révélerait quels comptes existent.
-      toast.error('Identifiants incorrects.')
+      toast.error(t.auth.badCredentials)
       return
     }
 
@@ -40,7 +42,7 @@ export function SignInForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       <div className="space-y-2">
-        <Label htmlFor="email">Adresse e-mail</Label>
+        <Label htmlFor="email">{t.auth.email}</Label>
         <Input
           id="email"
           type="email"
@@ -52,7 +54,7 @@ export function SignInForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">Mot de passe</Label>
+        <Label htmlFor="password">{t.auth.password}</Label>
         <Input
           id="password"
           type="password"
@@ -66,7 +68,7 @@ export function SignInForm() {
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? 'Connexion…' : 'Se connecter'}
+        {isSubmitting ? t.auth.signingIn : t.auth.signIn}
       </Button>
     </form>
   )

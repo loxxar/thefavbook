@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
+import { useTranslations } from '@/components/i18n/translations-provider'
 import { FieldError } from '@/components/mac/field-error'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +19,7 @@ import {
 
 export function CreateAccountForm() {
   const router = useRouter()
+  const { t } = useTranslations()
   const {
     register,
     handleSubmit,
@@ -31,7 +33,7 @@ export function CreateAccountForm() {
     const { error } = await authClient.signUp.email(values)
 
     if (error) {
-      toast.error(error.message ?? 'La création du compte a échoué.')
+      toast.error(error.message ?? t.auth.signUpFailed)
       return
     }
 
@@ -43,7 +45,7 @@ export function CreateAccountForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       <div className="space-y-2">
-        <Label htmlFor="name">Nom</Label>
+        <Label htmlFor="name">{t.auth.name}</Label>
         <Input
           id="name"
           autoComplete="name"
@@ -54,7 +56,7 @@ export function CreateAccountForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">Adresse e-mail</Label>
+        <Label htmlFor="email">{t.auth.email}</Label>
         <Input
           id="email"
           type="email"
@@ -66,7 +68,7 @@ export function CreateAccountForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">Mot de passe</Label>
+        <Label htmlFor="password">{t.auth.password}</Label>
         <Input
           id="password"
           type="password"
@@ -76,7 +78,7 @@ export function CreateAccountForm() {
           {...register('password')}
         />
         <p id="password-hint" className="text-[12px]">
-          {PASSWORD_MIN_LENGTH} caractères minimum.
+          {t.auth.passwordHint(PASSWORD_MIN_LENGTH)}
         </p>
         {errors.password && (
           <FieldError>{errors.password.message ?? ''}</FieldError>
@@ -84,7 +86,7 @@ export function CreateAccountForm() {
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? 'Création…' : 'Créer le compte'}
+        {isSubmitting ? t.auth.creatingAccount : t.auth.createAccount}
       </Button>
     </form>
   )

@@ -5,18 +5,18 @@ import { useState } from 'react'
 
 import { CreateAccountForm } from '@/components/auth/create-account-form'
 import { SignInForm } from '@/components/auth/sign-in-form'
+import { useTranslations } from '@/components/i18n/translations-provider'
 import { Button } from '@/components/ui/button'
 
 /** L'instance est ouverte : on choisit entre créer un compte et se connecter. */
 export function AuthPanel() {
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn')
+  const { t } = useTranslations()
 
   return (
     <div className="space-y-4">
       <p className="text-[12px] text-muted-foreground">
-        {mode === 'signIn'
-          ? 'Accédez à vos favoris.'
-          : 'Vos favoris restent les vôtres : rien n’est partagé, rien n’est envoyé ailleurs sans votre accord.'}
+        {mode === 'signIn' ? t.auth.signInIntro : t.auth.signUpIntro}
       </p>
 
       {mode === 'signIn' ? <SignInForm /> : <CreateAccountForm />}
@@ -28,14 +28,14 @@ export function AuthPanel() {
           size="sm"
           onClick={() => setMode(mode === 'signIn' ? 'signUp' : 'signIn')}
         >
-          {mode === 'signIn' ? 'Créer un compte' : 'J’ai déjà un compte'}
+          {mode === 'signIn' ? t.auth.switchToSignUp : t.auth.switchToSignIn}
         </Button>
 
         <Link
           href="/confidentialite"
           className="text-[11px] text-muted-foreground underline underline-offset-2"
         >
-          Que devient ce que j’envoie ?
+          {t.auth.privacyLink}
         </Link>
       </div>
     </div>

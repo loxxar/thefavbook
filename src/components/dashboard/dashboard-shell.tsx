@@ -5,11 +5,14 @@ import { useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
 import { ImportForm } from '@/components/bookmarks/import-form'
+import { useTranslations } from '@/components/i18n/translations-provider'
 import { shouldAskForTip, TipDialog } from '@/components/bookmarks/tip-dialog'
 import { MenuBar, ProductMark, type Menu } from '@/components/mac/menu-bar'
 import { MacWindow } from '@/components/mac/mac-window'
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth/client'
+import { LOCALES, LOCALE_NAMES } from '@/lib/i18n/config'
+import { setLocaleAction } from '@/lib/i18n/actions'
 import { createFolderAction } from '@/lib/bookmarks/folder-actions'
 import {
   createSpaceAction,
@@ -46,6 +49,7 @@ export function DashboardShell({
   children,
 }: DashboardShellProps) {
   const router = useRouter()
+  const { t, locale } = useTranslations()
   const [isImporting, setIsImporting] = useState(false)
   const [isTipping, setIsTipping] = useState(false)
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
@@ -115,32 +119,32 @@ export function DashboardShell({
       label: 'thefavbook',
       icon: <ProductMark />,
       items: [
-        { label: 'Accueil', href: '/' },
+        { label: t.menu.home, href: '/' },
         {
-          label: 'Confidentialité',
+          label: t.menu.privacy,
           href: '/confidentialite',
           separatorBefore: true,
         },
         {
-          label: 'Code source',
+          label: t.menu.sourceCode,
           href: 'https://github.com/loxxar/thefavbook',
         },
       ],
     },
     {
-      label: 'Fichier',
+      label: t.menu.file,
       items: [
         {
-          label: 'Importer des favoris…',
+          label: t.menu.import,
           onSelect: () => setIsImporting(true),
         },
         {
-          label: 'Exporter en HTML',
+          label: t.menu.export,
           onSelect: exportBookmarks,
           disabled: !hasBookmarks,
         },
         {
-          label: 'Nouveau dossier à la racine…',
+          label: t.menu.newRootFolder,
           separatorBefore: true,
           onSelect: async () => {
             const name = prompt('Nom du dossier')
@@ -160,16 +164,16 @@ export function DashboardShell({
       ],
     },
     {
-      label: 'Outils',
+      label: t.menu.tools,
       items: [
         {
-          label: 'Entretien : doublons et liens morts…',
+          label: t.menu.maintenance,
           href: `/entretien?espace=${encodeURIComponent(currentSpaceId)}`,
         },
       ],
     },
     {
-      label: 'Espaces',
+      label: t.menu.spaces,
       items: [
         ...spaces.map((space) => ({
           // Passer par l'adresse plutôt que par un état client garde deux
@@ -178,27 +182,36 @@ export function DashboardShell({
           href: `/?espace=${encodeURIComponent(space.id)}`,
         })),
         {
-          label: 'Nouvel espace…',
+          label: t.menu.newSpace,
           separatorBefore: true,
           onSelect: () => void runSpace('create'),
         },
         {
-          label: 'Renommer cet espace…',
+          label: t.menu.renameSpace,
           onSelect: () => void runSpace('rename'),
         },
         {
-          label: 'Supprimer cet espace…',
+          label: t.menu.deleteSpace,
           onSelect: () => void runSpace('delete'),
           disabled: spaces.length <= 1,
         },
       ],
     },
     {
-      label: 'Compte',
+      label: t.common.language,
+      items: LOCALES.map((code) => ({
+        label: `${code === locale ? '• ' : '   '}${LOCALE_NAMES[code]}`,
+        onSelect: () => {
+          void setLocaleAction(code).then(() => router.refresh())
+        },
+      })),
+    },
+    {
+      label: t.menu.account,
       items: [
         { label: email },
         {
-          label: 'Se déconnecter',
+          label: t.auth.signOut,
           separatorBefore: true,
           onSelect: async () => {
             await authClient.signOut()
@@ -207,7 +220,7 @@ export function DashboardShell({
           },
         },
         {
-          label: 'Supprimer mon compte…',
+          label: t.menu.deleteAccount,
           onSelect: () => setIsConfirmingDelete(true),
         },
       ],
@@ -229,10 +242,7 @@ export function DashboardShell({
       {children}
 
       {isImporting && (
-        <Modal
-          title="Importer des favoris"
-          onClose={() => setIsImporting(false)}
-        >
+        <Modal title={t.importer.title} onClose={() => setIsImporting(false)}>
           <ImportForm spaceId={currentSpaceId} />
         </Modal>
       )}

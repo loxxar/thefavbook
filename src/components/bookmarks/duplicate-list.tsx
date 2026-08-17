@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
+import { useTranslations } from '@/components/i18n/translations-provider'
 import { Button } from '@/components/ui/button'
 import {
   mergeAllDuplicatesAction,
@@ -29,13 +30,14 @@ export function DuplicateList({
   totalGroups,
   spaceId,
 }: DuplicateListProps) {
+  const { t } = useTranslations()
   const [isPending, startTransition] = useTransition()
   const [chosen, setChosen] = useState<Record<string, string>>({})
 
   if (totalGroups === 0) {
     return (
       <p className="text-[12px] text-muted-foreground">
-        Aucun doublon dans cet espace.
+        {t.maintenance.noDuplicates}
       </p>
     )
   }
@@ -46,13 +48,11 @@ export function DuplicateList({
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
         <p className="text-[12px]">
-          <strong>{totalGroups}</strong> adresse
-          {totalGroups > 1 ? 's' : ''} en double.{' '}
-          <span className="text-muted-foreground">
-            {groups.length} affichée{groups.length > 1 ? 's' : ''} ici,{' '}
-            {removable} favori{removable > 1 ? 's' : ''} supprimable
-            {removable > 1 ? 's' : ''}.
-          </span>
+          {t.maintenance.duplicateSummary(
+            totalGroups,
+            groups.length,
+            removable,
+          )}
         </p>
 
         <Button
@@ -61,7 +61,7 @@ export function DuplicateList({
           onClick={() =>
             startTransition(async () => {
               const confirmed = confirm(
-                `Fusionner les ${totalGroups} groupes en gardant le plus ancien de chacun ? Cette action est irréversible.`,
+                t.maintenance.confirmMergeAll(totalGroups),
               )
 
               if (!confirmed) return
@@ -69,14 +69,14 @@ export function DuplicateList({
               const result = await mergeAllDuplicatesAction(spaceId)
 
               if (result.ok) {
-                toast.success(`${result.removed} favoris supprimés.`)
+                toast.success(t.maintenance.removed(result.removed))
               } else {
                 toast.error(result.message)
               }
             })
           }
         >
-          Tout fusionner
+          {t.maintenance.mergeAll}
         </Button>
       </div>
 
@@ -91,7 +91,8 @@ export function DuplicateList({
             >
               <div className="mb-1 flex items-center justify-between gap-2">
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {group.entries.length} exemplaires · {group.canonicalUrl}
+                  {t.maintenance.copies(group.entries.length)} ·{' '}
+                  {group.canonicalUrl}
                 </p>
                 <Button
                   size="xs"
@@ -107,14 +108,14 @@ export function DuplicateList({
                       )
 
                       if (result.ok) {
-                        toast.success(`${result.removed} supprimés.`)
+                        toast.success(t.maintenance.removed(result.removed))
                       } else {
                         toast.error(result.message)
                       }
                     })
                   }
                 >
-                  Fusionner
+                  {t.maintenance.merge}
                 </Button>
               </div>
 
