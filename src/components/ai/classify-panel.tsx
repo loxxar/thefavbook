@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useId, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
@@ -14,6 +15,7 @@ import {
   QUOTA_COOLDOWN_MS,
   type ClassifiedSample,
 } from '@/lib/ai/state'
+import { CLASSIFY_BATCH_SIZE } from '@/lib/ai/classify'
 import { CLASSIFICATION_STYLES, DEFAULT_STYLE_ID } from '@/lib/ai/styles'
 import { setAiConsentAction } from '@/lib/auth/account-actions'
 import { Button } from '@/components/ui/button'
@@ -36,6 +38,7 @@ export function ClassifyPanel({
   pendingCount,
   spaceId,
 }: ClassifyPanelProps) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [remaining, setRemaining] = useState<number | null>(null)
   const [isRunning, setIsRunning] = useState(false)
@@ -46,15 +49,23 @@ export function ClassifyPanel({
     new Map(),
   )
   const [batchNumber, setBatchNumber] = useState(0)
+  /**
+   * Nombre de favoris à traiter, arrêté au lancement.
+   *
+   * POURQUOI ne pas lire la propriété en direct : elle descend du serveur et
+   * diminue à mesure que les suggestions naissent. Le dénominateur suivait
+   * alors le numérateur et la barre n'avançait jamais.
+   */
+  const [runTotal, setRunTotal] = useState<number | null>(null)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const stopRef = useRef(false)
   // Un groupe de radios porte sur tout le document : sans nom propre, deux
   // panneaux affichés ensemble se voleraient la sélection.
   const groupName = useId()
 
-  const total = unclassifiedCount
-  const done = remaining === null ? 0 : total - remaining
-  const batchTotal = Math.ceil(total / 100)
+  const total = runTotal ?? unclassifiedCount
+  const done = remaining === null ? 0 : Math.max(0, total - remaining)
+  const batchTotal = Math.max(1, Math.ceil(total / CLASSIFY_BATCH_SIZE))
 
   // Estimation fondée sur le rythme constaté, pas sur une constante : le temps
   // de réponse du modèle varie plus que la cadence qu'on impose.
@@ -68,7 +79,9 @@ export function ClassifyPanel({
   // L'ordre de grandeur mérite d'être annoncé avant de lancer, pas découvert
   // en attendant.
   const estimatedMinutes = Math.ceil(
-    (Math.ceil(total / 100) * DELAY_BETWEEN_BATCHES_MS) / 60_000,
+    (Math.ceil(unclassifiedCount / CLASSIFY_BATCH_SIZE) *
+      DELAY_BETWEEN_BATCHES_MS) /
+      60_000,
   )
 
   function grantConsent() {
@@ -86,6 +99,8 @@ export function ClassifyPanel({
    * rejeter dès le seizième lot.
    */
   async function runClassification() {
+    setRunTotal(unclassifiedCount)
+    setRemaining(unclassifiedCount)
     setIsRunning(true)
     stopRef.current = false
     setLog([])
@@ -157,6 +172,7 @@ export function ClassifyPanel({
     clearInterval(ticker)
     setNotice(null)
     setIsRunning(false)
+    router.refresh()
   }
 
   if (!hasConsent) {

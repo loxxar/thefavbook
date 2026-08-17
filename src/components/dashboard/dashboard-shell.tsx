@@ -274,6 +274,7 @@ export function DashboardShell({
       {isClassifying && (
         <Modal
           title={t.dashboard.sortWithAi}
+          size="wide"
           onClose={() => setIsClassifying(false)}
         >
           <ClassifyPanel
@@ -344,16 +345,26 @@ interface ModalProps {
   title: string
   onClose: () => void
   children: ReactNode
+  /**
+   * Largeur maximale. Le défaut convient à un formulaire ; le suivi d'analyse
+   * affiche deux listes côte à côte et des compteurs sur une ligne, qui ne
+   * tiennent pas dans cette laize.
+   */
+  size?: 'default' | 'wide'
 }
 
-function Modal({ title, onClose, children }: ModalProps) {
+function Modal({ title, onClose, children, size = 'default' }: ModalProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[440px]"
+        // La fenêtre ne dépasse jamais l'écran : elle défile chez elle, sinon
+        // ses boutons finissent hors de portée.
+        className={`max-h-[92dvh] w-full overflow-y-auto ${
+          size === 'wide' ? 'max-w-[900px]' : 'max-w-[440px]'
+        }`}
         onClick={(event) => event.stopPropagation()}
       >
         <MacWindow title={title} onClose={onClose}>

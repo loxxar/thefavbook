@@ -109,7 +109,11 @@ export async function classifyNextBatchAction(
       where: { userId: user.id, spaceId, suggestion: { is: null } },
     })
 
-    revalidatePath('/')
+    // POURQUOI seulement au dernier lot : revalider à chaque passe refaisait
+    // rendre toute la page, dont la liste entière des favoris. Le compteur
+    // d'attente redescendait alors dans le panneau au milieu de l'analyse, et
+    // la progression, calculée par différence, restait collée à zéro.
+    if (remaining === 0) revalidatePath('/')
 
     // Le titre d'origine sert de repli : le modèle ne réécrit que ceux qui
     // sont inexploitables.
