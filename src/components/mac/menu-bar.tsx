@@ -21,8 +21,9 @@ export interface MenuItem {
 }
 
 export interface Menu {
+  /** Sert de clé et de nom accessible, même quand une icône le remplace. */
   label: string
-  /** Rendu à la place du libellé, pour la pomme. */
+  /** Rendu à la place du libellé. */
   icon?: ReactNode
   items: MenuItem[]
 }
@@ -69,6 +70,9 @@ export function MenuBar({ menus, trailing }: MenuBarProps) {
               type="button"
               aria-haspopup="menu"
               aria-expanded={openIndex === index}
+              // Une icône seule ne se nomme pas : sans cela, le menu des
+              // langues n'aurait aucun libellé pour un lecteur d'écran.
+              aria-label={menu.icon === undefined ? undefined : menu.label}
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
               // Une fois un menu ouvert, survoler les autres les ouvre :
               // c'est le comportement d'origine.
@@ -145,6 +149,10 @@ function MenuEntry({ item, onDone }: { item: MenuItem; onDone: () => void }) {
 /**
  * Marque du produit, à la place de la pomme du menu d'origine.
  *
+ * `currentColor` plutôt qu'un dégradé figé : le bouton passe au blanc sur
+ * fond bleu quand son menu s'ouvre, et une teinte fixe s'y effaçait. À onze
+ * pixels, le dégradé ne se voyait de toute façon pas.
+ *
  * Un style visuel ne s'approprie pas, un logo si : reproduire la pomme
  * d'Apple aurait été un emprunt de marque qu'aucune mention en pied de page
  * ne couvre. Un ruban de signet dit ce que fait l'outil, et lui appartient.
@@ -154,23 +162,37 @@ function MenuEntry({ item, onDone }: { item: MenuItem; onDone: () => void }) {
  */
 export function ProductMark() {
   return (
-    <svg
-      width="11"
-      height="15"
-      viewBox="0 0 22 30"
-      aria-label="Menu thefavbook"
-      role="img"
-    >
-      <defs>
-        <linearGradient id="menu-mark" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#6f6f6f" />
-          <stop offset="1" stopColor="#2f2f2f" />
-        </linearGradient>
-      </defs>
+    <svg width="11" height="15" viewBox="0 0 22 30" role="presentation">
       <path
-        fill="url(#menu-mark)"
+        fill="currentColor"
         d="M3 1h16a2 2 0 0 1 2 2v25a1 1 0 0 1-1.6.8L11 22.5 2.6 28.8A1 1 0 0 1 1 28V3a2 2 0 0 1 2-2Z"
       />
+    </svg>
+  )
+}
+
+/**
+ * Globe du menu des langues.
+ *
+ * Dessiné plutôt qu'emprunté à un emoji : le rendu d'un emoji change d'un
+ * système à l'autre, et sa couleur ne suivrait pas celle de la barre.
+ *
+ * Les méridiens sont deux ellipses et une ligne — assez pour lire un globe à
+ * onze pixels, où tout dessin plus fin se refermerait en bouillie.
+ */
+export function GlobeMark() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 22 22" role="presentation">
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      >
+        <circle cx="11" cy="11" r="8.2" />
+        <ellipse cx="11" cy="11" rx="3.4" ry="8.2" />
+        <path d="M3.2 8.2h15.6M3.2 13.8h15.6" />
+      </g>
     </svg>
   )
 }

@@ -10,7 +10,12 @@ import { Workspace } from '@/components/workspace/workspace'
 import type { WorkspaceData } from '@/lib/bookmarks/rows'
 import { useTranslations } from '@/components/i18n/translations-provider'
 import { shouldAskForTip, TipDialog } from '@/components/bookmarks/tip-dialog'
-import { MenuBar, ProductMark, type Menu } from '@/components/mac/menu-bar'
+import {
+  GlobeMark,
+  MenuBar,
+  ProductMark,
+  type Menu,
+} from '@/components/mac/menu-bar'
 import { MacWindow } from '@/components/mac/mac-window'
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth/client'
@@ -214,6 +219,7 @@ export function DashboardShell({
     },
     {
       label: t.common.language,
+      icon: <GlobeMark />,
       items: LOCALES.map((code) => ({
         label: `${code === locale ? '• ' : '   '}${LOCALE_NAMES[code]}`,
         onSelect: () => {

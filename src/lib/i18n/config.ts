@@ -27,28 +27,3 @@ export const LOCALE_COOKIE = 'thefavbook.langue'
 export function isLocale(value: string | undefined): value is Locale {
   return value !== undefined && (LOCALES as readonly string[]).includes(value)
 }
-
-/**
- * Déduit la langue de l'en-tête envoyé par le navigateur.
- *
- * On ne lit que la partie principale — `de-AT` devient `de` : distinguer les
- * variantes régionales n'apporterait rien tant qu'on n'a qu'une traduction par
- * langue.
- */
-export function matchLocale(acceptLanguage: string | null): Locale {
-  if (acceptLanguage === null) return DEFAULT_LOCALE
-
-  const wanted = acceptLanguage
-    .split(',')
-    .map((part) => {
-      const [tag, q] = part.trim().split(';q=')
-      return { tag: tag.split('-')[0]?.toLowerCase() ?? '', q: Number(q ?? 1) }
-    })
-    .sort((a, b) => b.q - a.q)
-
-  for (const { tag } of wanted) {
-    if (isLocale(tag)) return tag
-  }
-
-  return DEFAULT_LOCALE
-}
