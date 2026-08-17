@@ -84,6 +84,15 @@ export function Workspace({
   })
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showInspector, setShowInspector] = useState(true)
+  /**
+   * Colonne affichée quand la largeur n'en autorise qu'une.
+   *
+   * Trois colonnes fixes ne tiennent pas sous mille pixels : la liste, prise
+   * en étau, tombait à zéro et l'écran ne montrait plus qu'une source list et
+   * un inspecteur vide. Au-delà de `lg`, cet état est ignoré et tout
+   * s'affiche.
+   */
+  const [pane, setPane] = useState<'sources' | 'list' | 'details'>('list')
   const [limit, setLimit] = useState(PAGE)
   const [removed, setRemoved] = useState<Set<string>>(new Set())
   const dragged = useRef<string | null>(null)
@@ -201,7 +210,7 @@ export function Workspace({
   const cleanable = data.counts.dead + data.counts.duplicates
 
   return (
-    <div className="aqua-window mx-3 mb-3 flex min-h-0 flex-1 flex-col">
+    <div className="aqua-window m-3 flex min-h-0 flex-1 flex-col sm:m-6">
       {/* Barre de titre en métal brossé, matériau des applications « appareil ». */}
       <div className="aqua-brushed flex h-[26px] shrink-0 items-center px-2">
         <div className="flex gap-[6px]" aria-hidden>
@@ -329,7 +338,10 @@ export function Workspace({
         )}
 
         <div className="ml-auto flex items-center gap-2">
-          <AquaButton onClick={() => setShowInspector((open) => !open)}>
+          <AquaButton
+            className="hidden lg:inline-block"
+            onClick={() => setShowInspector((open) => !open)}
+          >
             {showInspector
               ? t.workspace.hideInspector
               : t.workspace.showInspector}
@@ -374,21 +386,47 @@ export function Workspace({
         </div>
       )}
 
+      <div className="flex shrink-0 gap-1 border-b border-[#aeaeae] bg-[#e4e4e4] px-2 py-1 lg:hidden">
+        {(['sources', 'list', 'details'] as const).map((key) => (
+          <AquaButton
+            key={key}
+            tone={pane === key ? 'primary' : 'default'}
+            className="flex-1"
+            onClick={() => setPane(key)}
+          >
+            {key === 'sources'
+              ? t.workspace.paneSources
+              : key === 'list'
+                ? t.workspace.paneList
+                : t.workspace.paneDetails}
+          </AquaButton>
+        ))}
+      </div>
+
       <div className="flex min-h-0 flex-1">
         <SourceList
+          className={`w-full ${pane === 'sources' ? 'block' : 'hidden'} lg:block`}
           view={view}
-          onSelect={changeView}
+          onSelect={(next) => {
+            changeView(next)
+            setPane('list')
+          }}
           folders={data.folders}
           counts={data.counts}
           onDropOnFolder={dropOnFolder}
         />
 
-        <div className="flex min-w-0 flex-1 flex-col border-r border-[#b8b8b8]">
+        <div
+          className={`min-w-0 flex-1 flex-col border-r border-[#b8b8b8] ${pane === 'list' ? 'flex' : 'hidden'} lg:flex`}
+        >
           <BookmarkTable
             rows={visible.slice(0, limit)}
             total={visible.length}
             selectedId={selectedId}
-            onSelect={(row) => setSelectedId(row.id)}
+            onSelect={(row) => {
+              setSelectedId(row.id)
+              setPane('details')
+            }}
             sort={sort}
             onSort={changeSort}
             onShowMore={() => setLimit((current) => current + PAGE)}
@@ -400,7 +438,9 @@ export function Workspace({
         </div>
 
         {showInspector && (
-          <aside className="w-[260px] shrink-0 overflow-hidden bg-[#f4f6fa]">
+          <aside
+            className={`w-full shrink-0 overflow-hidden bg-[#f4f6fa] lg:block lg:w-[260px] ${pane === 'details' ? 'block' : 'hidden'}`}
+          >
             <Inspector
               row={selected}
               locale={locale}

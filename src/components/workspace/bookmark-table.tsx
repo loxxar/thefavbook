@@ -18,10 +18,10 @@ export type SortKey = 'title' | 'host' | 'health' | 'addedAt'
  * retrouve dans l'inspecteur, alors que le titre est le seul repère pour
  * reconnaître un favori.
  */
-const COL_NAME = 'min-w-[160px] flex-1'
+const COL_NAME = 'min-w-[140px] flex-1'
 const COL_HOST = 'hidden w-[210px] xl:flex'
 const COL_STATUS = 'w-[150px]'
-const COL_DATE = 'w-[88px]'
+const COL_DATE = 'hidden w-[88px] sm:flex'
 
 interface BookmarkTableProps {
   rows: BookmarkRow[]

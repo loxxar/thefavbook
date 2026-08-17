@@ -14,6 +14,7 @@ interface SourceListProps {
   counts: WorkspaceData['counts']
   /** Dépôt d'un favori sur un dossier. `null` : la racine de l'espace. */
   onDropOnFolder: (folderId: string | null) => void
+  className?: string
 }
 
 function sameView(a: View, b: View): boolean {
@@ -37,11 +38,14 @@ export function SourceList({
   folders,
   counts,
   onDropOnFolder,
+  className = '',
 }: SourceListProps) {
   const { t } = useTranslations()
 
   return (
-    <nav className="aqua-sourcelist w-[210px] shrink-0 overflow-y-auto px-2 py-2 text-[11px] select-none">
+    <nav
+      className={`aqua-sourcelist shrink-0 overflow-y-auto px-2 py-2 text-[11px] select-none lg:w-[210px] ${className}`}
+    >
       <Group label={t.workspace.library}>
         <Item
           label={t.workspace.allBookmarks}
